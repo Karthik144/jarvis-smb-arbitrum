@@ -1,4 +1,4 @@
-import { ReclaimClient } from '@reclaimprotocol/zk-fetch';
+import { ReclaimClient, type Proof } from '@reclaimprotocol/zk-fetch';
 
 interface ZkFetchOptions {
   appId: string;
@@ -6,7 +6,17 @@ interface ZkFetchOptions {
   trackingNumber: string;
 }
 
-export async function fetchTrackingProof(options: ZkFetchOptions) {
+/**
+ * Fetches a cryptographic proof of package delivery status from Amazon tracking.
+ *
+ * Uses Reclaim Protocol's zkFetch to generate a zero-knowledge proof that
+ * the tracking page contains "Delivered" status.
+ *
+ * @param options - Configuration for zkFetch operation
+ * @returns Promise resolving to cryptographic proof of delivery
+ * @throws {Error} If zkFetch fails or returns no proof
+ */
+export async function fetchTrackingProof(options: ZkFetchOptions): Promise<Proof> {
   const { appId, appSecret, trackingNumber } = options;
 
   console.log(`Initializing Reclaim client...`);
@@ -31,9 +41,20 @@ export async function fetchTrackingProof(options: ZkFetchOptions) {
     ],
   };
 
-  console.log('Executing zkFetch...');
-  const proof = await client.zkFetch(url, publicOptions, privateOptions);
+  try {
+    console.log('Executing zkFetch...');
+    const proof = await client.zkFetch(url, publicOptions, privateOptions);
 
-  console.log('zkFetch completed successfully');
-  return proof;
+    if (!proof) {
+      throw new Error('zkFetch returned no proof - verification may have failed');
+    }
+
+    console.log('zkFetch completed successfully');
+    return proof;
+  } catch (error) {
+    console.error('zkFetch failed:', error);
+    throw new Error(
+      `Failed to fetch tracking proof: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 }
