@@ -1,7 +1,7 @@
 {
   "name": "jarvis-smb-arbitrum",
   "version": "1.0.0",
-  "description": "",
+  "description": "zkTLS Package Tracking Verification using Reclaim Protocol",
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -15,8 +15,8 @@
     "type": "git",
     "url": "git+https://github.com/Karthik144/jarvis-smb-arbitrum.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["zktls", "reclaim-protocol", "package-tracking", "blockchain", "zkfetch"],
+  "author": "Karthik Ramu",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
