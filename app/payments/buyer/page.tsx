@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import PaymentCard from "@/app/components/payment-card";
 import NewPaymentModal from "@/app/components/new-payment-modal";
+import BalanceCard from "@/app/components/balance-card";
 import { useWallets } from "@privy-io/react-auth";
 import { Payment } from "@/lib/types";
 
@@ -58,6 +59,9 @@ export default function BuyerPaymentsPage() {
         }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Balance Card */}
+          {buyerAddress && <BalanceCard walletAddress={buyerAddress} />}
+
           {/* Title row */}
           <Box
             sx={{
