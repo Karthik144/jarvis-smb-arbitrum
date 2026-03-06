@@ -5,9 +5,20 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { ethers } from "ethers";
 
-// USDC contract on Arbitrum mainnet
-const USDC_ADDRESS = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+// USDC contract addresses
+const USDC_ADDRESS_MAINNET = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+const USDC_ADDRESS_SEPOLIA = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d";
 const USDC_DECIMALS = 6;
+
+// Use environment variable or fallback to public RPC
+const RPC_URL =
+  process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL ||
+  "https://sepolia-rollup.arbitrum.io/rpc";
+
+// Detect which USDC address to use based on RPC URL
+const USDC_ADDRESS = RPC_URL.includes("sepolia")
+  ? USDC_ADDRESS_SEPOLIA
+  : USDC_ADDRESS_MAINNET;
 
 // Minimal ERC-20 ABI for balanceOf
 const ERC20_ABI = [
@@ -33,9 +44,7 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
         setLoading(true);
 
         // Create provider for Arbitrum
-        const provider = new ethers.JsonRpcProvider(
-          "https://arb1.arbitrum.io/rpc"
-        );
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
 
         // Create contract instance
         const usdcContract = new ethers.Contract(
