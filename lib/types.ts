@@ -51,3 +51,12 @@ export interface UpdatePaymentInput {
   status?: PaymentStatus;
   reclaim_proof?: ReclaimProof;
 }
+
+// Contact (buyer's private address book)
+export interface Contact {
+  id: string;
+  created_at: string;
+  owner_address: string;
+  name: string;
+  wallet_address: string;
+}

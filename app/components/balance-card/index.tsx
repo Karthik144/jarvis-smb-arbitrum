@@ -43,12 +43,6 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
 
         const provider = new ethers.JsonRpcProvider(RPC_URL);
 
-        console.log("BalanceCard Debug:", {
-          rpcUrl: RPC_URL,
-          usdcAddress: USDC_ADDRESS,
-          walletAddress,
-        });
-
         const usdcContract = new ethers.Contract(
           USDC_ADDRESS,
           ERC20_ABI,
@@ -56,10 +50,8 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
         );
 
         const rawBalance = await usdcContract.balanceOf(walletAddress);
-        console.log("Raw balance:", rawBalance.toString());
 
         const balanceInUsdc = Number(rawBalance) / Math.pow(10, USDC_DECIMALS);
-        console.log("Formatted balance:", balanceInUsdc);
 
         const formattedBalance = `$${balanceInUsdc.toLocaleString("en-US", {
           minimumFractionDigits: 2,

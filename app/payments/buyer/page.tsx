@@ -1,4 +1,3 @@
-// app/payments/buyer/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,8 +7,9 @@ import Button from "@mui/material/Button";
 import PaymentCard from "@/app/components/payment-card";
 import NewPaymentModal from "@/app/components/new-payment-modal";
 import BalanceCard from "@/app/components/balance-card";
+import ContactsModal from "@/app/components/contacts-modal";
 import { useWallets } from "@privy-io/react-auth";
-import { Payment } from "@/lib/types";
+import { Payment, Contact } from "@/lib/types";
 
 function paymentBadges(payment: Payment): string[] {
   switch (payment.status) {
@@ -26,10 +26,29 @@ function paymentBadges(payment: Payment): string[] {
 
 export default function BuyerPaymentsPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [contactsOpen, setContactsOpen] = useState(false);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [contactMap, setContactMap] = useState<Record<string, string>>({});
   const { wallets } = useWallets();
 
-  const buyerAddress = wallets.find((w) => w.walletClientType === "privy")?.address;
+  const buyerAddress = wallets.find(
+    (w) => w.walletClientType === "privy"
+  )?.address;
+
+  const fetchContacts = useCallback(async () => {
+    if (!buyerAddress) return;
+    try {
+      const res = await fetch(`/api/contacts?owner_address=${buyerAddress}`);
+      const json = await res.json();
+      if (json.success) {
+        const map: Record<string, string> = {};
+        (json.data as Contact[]).forEach((c) => {
+          map[c.wallet_address.toLowerCase()] = c.name;
+        });
+        setContactMap(map);
+      }
+    } catch {}
+  }, [buyerAddress]);
 
   const fetchPayments = useCallback(async () => {
     if (!buyerAddress) return;
@@ -46,7 +65,8 @@ export default function BuyerPaymentsPage() {
 
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
+    fetchContacts();
+  }, [fetchPayments, fetchContacts]);
 
   return (
     <>
@@ -59,10 +79,8 @@ export default function BuyerPaymentsPage() {
         }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {/* Balance Card */}
           {buyerAddress && <BalanceCard walletAddress={buyerAddress} />}
 
-          {/* Title row */}
           <Box
             sx={{
               display: "flex",
@@ -82,48 +100,83 @@ export default function BuyerPaymentsPage() {
             >
               Scheduled Payments
             </Typography>
-            <Button
-              onClick={() => setModalOpen(true)}
-              sx={{
-                backgroundColor: "#171717",
-                color: "#FFFFFF",
-                borderRadius: "10px",
-                px: 2.5,
-                py: 1.25,
-                textTransform: "none",
-                fontSize: "14px",
-                fontWeight: 500,
-                fontFamily: "inherit",
-                "&:hover": { backgroundColor: "#2a2a2a" },
-              }}
-            >
-              New Payment
-            </Button>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <Button
+                onClick={() => setContactsOpen(true)}
+                variant="outlined"
+                sx={{
+                  borderColor: "#E0E0E0",
+                  color: "#000000",
+                  borderRadius: "10px",
+                  px: 2.5,
+                  py: 1.25,
+                  textTransform: "none",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  "&:hover": {
+                    backgroundColor: "#F5F5F5",
+                    borderColor: "#CCCCCC",
+                  },
+                }}
+              >
+                Contacts
+              </Button>
+              <Button
+                onClick={() => setModalOpen(true)}
+                sx={{
+                  backgroundColor: "#171717",
+                  color: "#FFFFFF",
+                  borderRadius: "10px",
+                  px: 2.5,
+                  py: 1.25,
+                  textTransform: "none",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  "&:hover": { backgroundColor: "#2a2a2a" },
+                }}
+              >
+                New Payment
+              </Button>
+            </Box>
           </Box>
 
           {/* Payment cards */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {payments.length === 0 ? (
               <Typography
-                sx={{ fontSize: "14px", color: "#999999", fontFamily: "inherit" }}
+                sx={{
+                  fontSize: "14px",
+                  color: "#999999",
+                  fontFamily: "inherit",
+                }}
               >
                 No payments yet. Create your first payment above.
               </Typography>
             ) : (
               payments.map((payment) => {
+                const total = parseFloat(payment.total_amount);
                 const upfrontPaid = (
-                  (parseFloat(payment.total_amount) * payment.upfront_percentage) /
+                  (total * payment.upfront_percentage) /
                   100
                 ).toFixed(2);
+                const paidAmount =
+                  payment.status === "completed"
+                    ? total.toFixed(2)
+                    : upfrontPaid;
+                const contactName =
+                  contactMap[payment.seller_address.toLowerCase()];
                 return (
                   <PaymentCard
                     key={payment.id}
                     variant="buyer"
-                    company={payment.seller_address}
+                    company={contactName ?? payment.seller_address}
+                    sellerAddress={payment.seller_address}
                     terms={`${payment.upfront_percentage}% upfront, ${payment.remaining_percentage}% on delivery`}
-                    amount={`$${parseFloat(payment.total_amount).toLocaleString()} USDC`}
+                    amount={`$${total.toLocaleString()} USDC`}
                     badges={paymentBadges(payment)}
-                    paid={`$${upfrontPaid} paid`}
+                    paid={`$${paidAmount} paid`}
                   />
                 );
               })
@@ -136,6 +189,11 @@ export default function BuyerPaymentsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSuccess={fetchPayments}
+      />
+      <ContactsModal
+        open={contactsOpen}
+        onClose={() => setContactsOpen(false)}
+        ownerAddress={buyerAddress ?? ""}
       />
     </>
   );

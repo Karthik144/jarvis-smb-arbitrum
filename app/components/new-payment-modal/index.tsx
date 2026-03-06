@@ -1,17 +1,21 @@
 // app/components/new-payment-modal/index.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { createEscrow } from "@/lib/contract";
+import { Contact } from "@/lib/types";
 
 interface NewPaymentModalProps {
   open: boolean;
@@ -49,8 +53,20 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
     upfrontPct: "",
     trackingNumber: "",
   });
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [saveAsContact, setSaveAsContact] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const wallet = wallets.find((w) => w.walletClientType === "privy");
+
+  useEffect(() => {
+    if (open && wallet?.address) {
+      fetch(`/api/contacts?owner_address=${wallet.address}`)
+        .then((r) => r.json())
+        .then((json) => { if (json.success) setContacts(json.data); });
+    }
+  }, [open, wallet?.address]);
 
   function handleChange(field: string) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +76,7 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
 
   function reset() {
     setForm({ paymentTo: "", sellerAddress: "", totalAmount: "", upfrontPct: "", trackingNumber: "" });
+    setSaveAsContact(false);
     setError(null);
   }
 
@@ -86,7 +103,6 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
       return;
     }
 
-    const wallet = wallets.find((w) => w.walletClientType === "privy");
     if (!wallet) {
       setError("No wallet connected. Please log in again.");
       return;
@@ -94,7 +110,6 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
 
     setLoading(true);
     try {
-      // 1. Create Supabase record to get the UUID (used as on-chain paymentId)
       const res = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -111,12 +126,10 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
       if (!json.success) throw new Error(json.error || "Failed to save payment.");
       const paymentId: string = json.data.id;
 
-      // 2. Get ethers signer from Privy embedded wallet
       const provider = await wallet.getEthereumProvider();
       const ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();
 
-      // 3. Approve USDC + call createEscrow on-chain (upfront released immediately by contract)
       const txHash = await createEscrow(signer, {
         paymentId,
         totalAmountUSD: amount,
@@ -125,12 +138,29 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
       });
       console.log("Escrow created:", txHash);
 
-      // 4. Update Supabase status
       await fetch(`/api/payments/${paymentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "upfront_paid" }),
       });
+
+      // Save contact if requested and not already saved
+      if (saveAsContact && form.paymentTo.trim()) {
+        const alreadySaved = contacts.some(
+          (c) => c.wallet_address.toLowerCase() === sellerAddress.toLowerCase()
+        );
+        if (!alreadySaved) {
+          await fetch("/api/contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              owner_address: wallet.address,
+              name: form.paymentTo.trim(),
+              wallet_address: sellerAddress,
+            }),
+          });
+        }
+      }
 
       reset();
       onSuccess?.();
@@ -141,6 +171,11 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
       setLoading(false);
     }
   }
+
+  // Whether the current sellerAddress is already a saved contact
+  const alreadyContact = contacts.some(
+    (c) => c.wallet_address.toLowerCase() === form.sellerAddress.toLowerCase()
+  );
 
   return (
     <Dialog
@@ -176,16 +211,56 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
         </Box>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-          <TextField
-            label="Payment To"
-            placeholder="Acme Inc."
-            fullWidth
-            variant="outlined"
-            sx={inputSx}
-            value={form.paymentTo}
-            onChange={handleChange("paymentTo")}
+          {/* Seller autocomplete — searches by name or address */}
+          <Autocomplete
+            freeSolo
+            options={contacts}
+            getOptionLabel={(option) =>
+              typeof option === "string" ? option : option.name
+            }
+            filterOptions={(options, { inputValue }) => {
+              const q = inputValue.toLowerCase();
+              return options.filter(
+                (c) =>
+                  c.name.toLowerCase().includes(q) ||
+                  c.wallet_address.toLowerCase().includes(q)
+              );
+            }}
+            inputValue={form.paymentTo}
+            onInputChange={(_, value) => setForm((p) => ({ ...p, paymentTo: value }))}
+            onChange={(_, value) => {
+              if (value && typeof value !== "string") {
+                setForm((p) => ({
+                  ...p,
+                  paymentTo: value.name,
+                  sellerAddress: value.wallet_address,
+                }));
+              }
+            }}
             disabled={loading}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} key={option.id}>
+                <Box>
+                  <Typography sx={{ fontSize: "14px", fontWeight: 600, fontFamily: "inherit" }}>
+                    {option.name}
+                  </Typography>
+                  <Typography sx={{ fontSize: "12px", color: "#777", fontFamily: "inherit" }}>
+                    {option.wallet_address.slice(0, 6)}…{option.wallet_address.slice(-4)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Payment To"
+                placeholder="Acme Inc. or search contacts…"
+                variant="outlined"
+                sx={inputSx}
+              />
+            )}
           />
+
           <TextField
             label="Seller Wallet Address"
             placeholder="0x..."
@@ -226,6 +301,26 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
             onChange={handleChange("trackingNumber")}
             disabled={loading}
           />
+
+          {/* Save as contact option — only shown when address is set and not already saved */}
+          {form.sellerAddress && ethers.isAddress(form.sellerAddress) && !alreadyContact && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={saveAsContact}
+                  onChange={(e) => setSaveAsContact(e.target.checked)}
+                  size="small"
+                  sx={{ color: "#999", "&.Mui-checked": { color: "#171717" } }}
+                />
+              }
+              label={
+                <Typography sx={{ fontSize: "13px", color: "#555", fontFamily: "inherit" }}>
+                  Save seller as a contact
+                </Typography>
+              }
+              disabled={loading}
+            />
+          )}
 
           {error && (
             <Typography sx={{ fontSize: "13px", color: "#d32f2f", fontFamily: "inherit" }}>
