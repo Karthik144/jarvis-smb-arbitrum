@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "./components/navbar";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Jarvis SMB Arbitrum",
@@ -14,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body style={{ isolation: "isolate" }}>
+    <html lang="en" className={inter.className}>
+      <body style={{ isolation: "isolate", margin: 0 }}>
         <Providers>
           <Navbar />
           {children}
