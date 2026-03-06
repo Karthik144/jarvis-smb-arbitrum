@@ -1,0 +1,749 @@
+{
+  "version": "2.6",
+  "children": [
+    {
+      "type": "frame",
+      "id": "bi8Au",
+      "x": 0,
+      "y": 0,
+      "name": "Dashboard Page",
+      "clip": true,
+      "width": 800,
+      "height": 600,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "BEKVd",
+          "x": 314,
+          "y": 191,
+          "fill": "#000000",
+          "content": "Jarvis",
+          "fontFamily": "Inter",
+          "fontSize": 60,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "3aeKd",
+          "x": 218,
+          "y": 272,
+          "fill": "#000000",
+          "content": "Instant & programmable payments for your SMB",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "group",
+          "id": "ITYCT",
+          "x": 333,
+          "y": 319,
+          "name": "Get Started Button",
+          "children": [
+            {
+              "type": "rectangle",
+              "cornerRadius": 12,
+              "id": "pfsSx",
+              "x": 0,
+              "y": 0,
+              "fill": "#000000ff",
+              "width": 133,
+              "height": 37,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              }
+            },
+            {
+              "type": "text",
+              "id": "4UooZ",
+              "x": 15,
+              "y": 9,
+              "fill": "#ffffff",
+              "content": "Get Started ->",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "httud",
+          "x": 712,
+          "y": 26,
+          "fill": "#000000",
+          "content": "Login",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "nc7kz",
+      "x": 828,
+      "y": 0,
+      "name": "Scheduled Payments - Buyer",
+      "clip": true,
+      "width": 800,
+      "height": 600,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "0lKIs",
+          "x": 712,
+          "y": 26,
+          "fill": "#000000",
+          "content": "Sign Out",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "M5EJE",
+          "x": 40,
+          "y": 88,
+          "fill": "#000000",
+          "content": "Your Scheduled Payments",
+          "fontFamily": "Inter",
+          "fontSize": 25,
+          "fontWeight": "500"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "V8Hha",
+          "x": 40,
+          "y": 169,
+          "width": 669,
+          "height": 117,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#000000ff"
+          }
+        },
+        {
+          "type": "text",
+          "id": "Z4VAa",
+          "x": 55,
+          "y": 186,
+          "fill": "#000000",
+          "content": "Acme Inc. ",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "MhmpJ",
+          "x": 55,
+          "y": 214,
+          "fill": "#726565ff",
+          "content": "25% at start, then 75% at delivery",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "n6DVe",
+          "x": 539,
+          "y": 205,
+          "fill": "#000000",
+          "content": "$5,000 USD ",
+          "fontFamily": "Inter",
+          "fontSize": 24,
+          "fontWeight": "700"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 24,
+          "id": "W3p6g",
+          "x": 55,
+          "y": 246,
+          "fill": "#ffd400",
+          "width": 101,
+          "height": 22
+        },
+        {
+          "type": "text",
+          "id": "59gtd",
+          "x": 64,
+          "y": 249,
+          "fill": "#57564f",
+          "content": "Initial Payment",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "GIj6N",
+      "x": 0,
+      "y": 658,
+      "name": "Get Started Modal",
+      "clip": true,
+      "width": 464,
+      "height": 334,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "vQLBl",
+          "x": 41,
+          "y": 42,
+          "fill": "#000000",
+          "content": "Welcome!",
+          "fontFamily": "Inter",
+          "fontSize": 28,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "exJ0D",
+          "x": 41,
+          "y": 81,
+          "fill": "#000000",
+          "content": "Tell us a bit about your SMB",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "NeINf",
+          "x": 41,
+          "y": 135,
+          "width": 215,
+          "height": 26,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#00000045"
+          }
+        },
+        {
+          "type": "text",
+          "id": "fRztV",
+          "x": 41,
+          "y": 118,
+          "fill": "#000000ab",
+          "content": "Company Name",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "group",
+          "id": "O6l9l",
+          "x": 44,
+          "y": 258,
+          "name": "Buyer Option Button",
+          "children": [
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "cXlPu",
+              "x": 0,
+              "y": 0,
+              "fill": "#000000ff",
+              "width": 64,
+              "height": 21
+            },
+            {
+              "type": "text",
+              "id": "TSLtp",
+              "x": 15,
+              "y": 3,
+              "fill": "#ffffffff",
+              "content": "Buyer",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "id": "s4tVC",
+          "x": 386,
+          "y": 296,
+          "name": "Get Started Button",
+          "children": [
+            {
+              "type": "rectangle",
+              "cornerRadius": 12,
+              "id": "Yiaqi",
+              "x": 0,
+              "y": 0,
+              "fill": "#000000ff",
+              "width": 66,
+              "height": 25,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              }
+            },
+            {
+              "type": "text",
+              "id": "lo3GR",
+              "x": 17,
+              "y": 5.044694257591232,
+              "rotation": 0.08260623276156688,
+              "fill": "#ffffff",
+              "textGrowth": "fixed-width",
+              "width": 31,
+              "content": "Done",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "WDzBb",
+          "x": 41,
+          "y": 191,
+          "width": 215,
+          "height": 26,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#00000045"
+          }
+        },
+        {
+          "type": "text",
+          "id": "mpP80",
+          "x": 41,
+          "y": 174,
+          "fill": "#000000ab",
+          "content": "Email",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "L7UiF",
+      "x": 115,
+      "y": 915,
+      "name": "Buyer Option Button",
+      "children": [
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "xJTQm",
+          "x": 0,
+          "y": 0,
+          "width": 64,
+          "height": 21
+        },
+        {
+          "type": "text",
+          "id": "tmszn",
+          "x": 15,
+          "y": 3,
+          "fill": "#000000ff",
+          "content": "Seller",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "8OQZD",
+      "x": 179,
+      "y": 915,
+      "name": "Buyer Option Button",
+      "children": [
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "2S6wx",
+          "x": 0,
+          "y": 0,
+          "width": 64,
+          "height": 21
+        },
+        {
+          "type": "text",
+          "id": "yzenA",
+          "x": 15,
+          "y": 3,
+          "fill": "#000000ff",
+          "content": "Both",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "k1hGu",
+      "x": 45,
+      "y": 894,
+      "fill": "#000000ab",
+      "content": "Will you sending or receiving payments? ",
+      "fontFamily": "Inter",
+      "fontSize": 10,
+      "fontWeight": "normal"
+    },
+    {
+      "type": "group",
+      "id": "o8Pje",
+      "x": 1472,
+      "y": 89,
+      "name": "New Payment Button",
+      "children": [
+        {
+          "type": "rectangle",
+          "cornerRadius": 12,
+          "id": "kguqs",
+          "x": 0,
+          "y": 0,
+          "fill": "#000000ff",
+          "width": 64,
+          "height": 37,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          }
+        },
+        {
+          "type": "text",
+          "id": "eME9i",
+          "x": 15,
+          "y": 9,
+          "fill": "#ffffff",
+          "content": "New",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "sq7p2",
+      "x": 828,
+      "y": 658,
+      "name": "Get Started Modal",
+      "clip": true,
+      "width": 464,
+      "height": 334,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "ZGBKY",
+          "x": 41,
+          "y": 42,
+          "fill": "#000000",
+          "content": "New payment",
+          "fontFamily": "Inter",
+          "fontSize": 28,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "KFZ3Q",
+          "x": 41,
+          "y": 81,
+          "fill": "#000000",
+          "content": "Give us some details about the payment...",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "lbfcW",
+          "x": 41,
+          "y": 135,
+          "width": 215,
+          "height": 26,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#00000045"
+          }
+        },
+        {
+          "type": "text",
+          "id": "omfTy",
+          "x": 41,
+          "y": 118,
+          "fill": "#000000ab",
+          "content": "Payment To",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "group",
+          "id": "JG4kO",
+          "x": 386,
+          "y": 296,
+          "name": "Get Started Button",
+          "children": [
+            {
+              "type": "rectangle",
+              "cornerRadius": 12,
+              "id": "senAH",
+              "x": 0,
+              "y": 0,
+              "fill": "#000000ff",
+              "width": 66,
+              "height": 25,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              }
+            },
+            {
+              "type": "text",
+              "id": "RFqQg",
+              "x": 17,
+              "y": 5.044694257591232,
+              "rotation": 0.08260623276156688,
+              "fill": "#ffffff",
+              "textGrowth": "fixed-width",
+              "width": 31,
+              "content": "Done",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "SsPFZ",
+          "x": 41,
+          "y": 191,
+          "width": 215,
+          "height": 26,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#00000045"
+          }
+        },
+        {
+          "type": "text",
+          "id": "fTJfr",
+          "x": 41,
+          "y": 174,
+          "fill": "#000000ab",
+          "content": "Total Amount",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "rectangle",
+      "cornerRadius": 8,
+      "id": "PXpXX",
+      "x": 869,
+      "y": 905,
+      "width": 36,
+      "height": 26,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#00000045"
+      }
+    },
+    {
+      "type": "text",
+      "id": "9PxVY",
+      "x": 869,
+      "y": 888,
+      "fill": "#000000ab",
+      "content": "Start %",
+      "fontFamily": "Inter",
+      "fontSize": 10,
+      "fontWeight": "normal"
+    },
+    {
+      "type": "frame",
+      "id": "guR6M",
+      "x": 1853,
+      "y": 0,
+      "name": "Scheduled Payments - Seller",
+      "clip": true,
+      "width": 800,
+      "height": 600,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "YjVYK",
+          "x": 712,
+          "y": 26,
+          "fill": "#000000",
+          "content": "Sign Out",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "9TvSV",
+          "x": 36,
+          "y": 203,
+          "fill": "#000000",
+          "content": "Your Scheduled Payments",
+          "fontFamily": "Inter",
+          "fontSize": 25,
+          "fontWeight": "500"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "fm3dK",
+          "x": 36,
+          "y": 254,
+          "width": 669,
+          "height": 117,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#000000ff"
+          }
+        },
+        {
+          "type": "text",
+          "id": "ansmr",
+          "x": 51,
+          "y": 271,
+          "fill": "#000000",
+          "content": "Acme Inc. ",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "p04eY",
+          "x": 51,
+          "y": 299,
+          "fill": "#726565ff",
+          "content": "25% at start, then 75% at delivery",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "5nvve",
+          "x": 535,
+          "y": 290,
+          "fill": "#000000",
+          "content": "$5,000 USD ",
+          "fontFamily": "Inter",
+          "fontSize": 24,
+          "fontWeight": "700"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 24,
+          "id": "VXNUY",
+          "x": 51,
+          "y": 331,
+          "fill": "#ffd400",
+          "width": 101,
+          "height": 22
+        },
+        {
+          "type": "text",
+          "id": "ZOdkb",
+          "x": 60,
+          "y": 334,
+          "fill": "#57564f",
+          "content": "Initial Payment",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 18,
+          "id": "L9U8Z",
+          "x": 580,
+          "y": 326,
+          "fill": "#a0d585",
+          "width": 97,
+          "height": 32
+        },
+        {
+          "type": "text",
+          "id": "ytXSw",
+          "x": 607,
+          "y": 332,
+          "fill": "#000000",
+          "content": "Claim",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "EMvQf",
+          "x": 36,
+          "y": 80,
+          "fill": "#000000",
+          "content": "20,000 USD",
+          "fontFamily": "Inter",
+          "fontSize": 35,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "yJzcN",
+      "x": 1892,
+      "y": 126,
+      "fill": "#000000",
+      "content": "Balance",
+      "fontFamily": "Inter",
+      "fontSize": 25,
+      "fontWeight": "500"
+    }
+  ],
+  "themes": {
+    "Theme": [
+      "Default"
+    ],
+    "Theme-1": [
+      "Default"
+    ]
+  }
+}
