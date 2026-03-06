@@ -7,12 +7,20 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import { usePrivy, useLogin, useLogout } from "@privy-io/react-auth";
+import {
+  usePrivy,
+  useLogin,
+  useLogout,
+  useFundWallet,
+  useWallets,
+} from "@privy-io/react-auth";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { authenticated } = usePrivy();
+  const { wallets } = useWallets();
+  const { fundWallet } = useFundWallet();
 
   const { login } = useLogin({
     onComplete: ({ wasAlreadyAuthenticated }) => {
@@ -28,7 +36,15 @@ export default function Navbar() {
     },
   });
 
+  const handleFundWallet = () => {
+    const wallet = wallets.find((w) => w.walletClientType === "privy");
+    if (wallet) {
+      fundWallet({ address: wallet.address });
+    }
+  };
+
   const isPaymentsRoute = pathname?.startsWith("/payments");
+  const isDashboardRoute = pathname === "/dashboard";
 
   const handleAuthAction = () => {
     if (isPaymentsRoute && authenticated) {
@@ -53,9 +69,7 @@ export default function Navbar() {
         elevation={0}
         sx={{
           backgroundColor: "#FFFFFF",
-          borderBottom: isPaymentsRoute
-            ? "1px solid #E0E0E0"
-            : "none",
+          borderBottom: isPaymentsRoute ? "1px solid #E0E0E0" : "none",
         }}
       >
         <Toolbar sx={{ px: 7, py: "20px", minHeight: "unset !important" }}>
@@ -73,6 +87,30 @@ export default function Navbar() {
           >
             Jarvis
           </Typography>
+          {authenticated && (
+            <Button
+              onClick={handleFundWallet}
+              variant="outlined"
+              sx={{
+                color: "#000000",
+                textTransform: "none",
+                borderColor: "#E0E0E0",
+                borderRadius: "8px",
+                backgroundColor: "#FFFFFF",
+                fontWeight: 500,
+                fontSize: "14px",
+                px: 2.5,
+                py: 1,
+                mr: 2,
+                "&:hover": {
+                  backgroundColor: "#F5F5F5",
+                  borderColor: "#CCCCCC",
+                },
+              }}
+            >
+              Add Funds
+            </Button>
+          )}
           <Button
             onClick={handleAuthAction}
             variant="outlined"

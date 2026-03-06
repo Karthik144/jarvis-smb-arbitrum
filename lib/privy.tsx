@@ -1,7 +1,7 @@
 'use client';
 
 import { PrivyProvider } from '@privy-io/react-auth';
-import { arbitrumSepolia } from 'viem/chains';
+import { arbitrumSepolia, arbitrum, base, mainnet } from 'viem/chains';
 
 export function PrivyConfig({ children }: { children: React.ReactNode }) {
   return (
@@ -19,7 +19,7 @@ export function PrivyConfig({ children }: { children: React.ReactNode }) {
           },
         },
         defaultChain: arbitrumSepolia,
-        supportedChains: [arbitrumSepolia],
+        supportedChains: [arbitrumSepolia, arbitrum, base, mainnet],
       }}
     >
       {children}
