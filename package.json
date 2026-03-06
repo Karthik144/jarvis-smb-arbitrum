@@ -7,30 +7,57 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "build": "tsc",
-    "dev": "ts-node src/index.ts"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "zkfetch": "ts-node src/index.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Karthik144/jarvis-smb-arbitrum.git"
   },
-  "keywords": ["zktls", "reclaim-protocol", "package-tracking", "blockchain", "zkfetch"],
+  "keywords": [
+    "zktls",
+    "reclaim-protocol",
+    "package-tracking",
+    "blockchain",
+    "zkfetch"
+  ],
   "author": "Karthik Ramu",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Karthik144/jarvis-smb-arbitrum/issues"
   },
   "homepage": "https://github.com/Karthik144/jarvis-smb-arbitrum#readme",
   "dependencies": {
+    "@privy-io/react-auth": "^3.16.0",
     "@reclaimprotocol/js-sdk": "^4.14.0",
     "@reclaimprotocol/zk-fetch": "^0.8.0",
-    "dotenv": "^17.3.1"
+    "@supabase/supabase-js": "^2.98.0",
+    "dotenv": "^17.3.1",
+    "ethers": "^6.16.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.4",
+    "@eslint/js": "^9.39.3",
+    "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.3",
+    "eslint-config-next": "^16.1.6",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
   }
 }
