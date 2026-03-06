@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/navigation";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import { createUser, DuplicateEmailError } from "@/lib/api/users";
 
 interface GetStartedModalProps {
   open: boolean;
@@ -14,7 +19,24 @@ interface GetStartedModalProps {
 }
 
 export default function GetStartedModal({ open, onClose }: GetStartedModalProps) {
-  const [role, setRole] = useState<"buyer" | "seller">("buyer");
+  const router = useRouter();
+  const { user } = usePrivy();
+  const { sendCode, loginWithCode } = useLoginWithEmail({
+    onError: (error) => {
+      console.error('Privy login error:', error);
+      setError('Authentication failed. Please try again.');
+    },
+  });
+
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [formData, setFormData] = useState({
+    companyName: '',
+    email: '',
+    type: 'buyer' as 'buyer' | 'seller',
+  });
+  const [otpCode, setOtpCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const inputSx = {
     "& .MuiOutlinedInput-root": {
@@ -37,10 +59,127 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
     },
   };
 
+  // Validate required env vars
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Missing Supabase environment variables');
+    }
+  }, []);
+
+  // Handle account creation after Privy auth
+  useEffect(() => {
+    async function createAccount() {
+      if (currentStep !== 3 || !user) return;
+
+      try {
+        const embeddedWallet = user.linkedAccounts.find(
+          (account) => account.type === 'wallet' && account.walletClientType === 'privy'
+        );
+
+        if (!embeddedWallet || !('address' in embeddedWallet)) {
+          throw new Error('Embedded wallet not found');
+        }
+
+        await createUser({
+          company_name: formData.companyName,
+          email: formData.email,
+          wallet_address: embeddedWallet.address as string,
+          type: formData.type,
+          privy_user_id: user.id,
+        });
+
+        const redirectPath = formData.type === 'buyer' ? '/payments/buyer' : '/payments/seller';
+        router.push(redirectPath);
+      } catch (err: unknown) {
+        if (err instanceof DuplicateEmailError) {
+          setError(err.message);
+        } else {
+          setError('Unable to create account. Please try again.');
+        }
+        setCurrentStep(2);
+      }
+    }
+
+    createAccount();
+  }, [currentStep, user]);
+
+  const handleStep1Continue = async () => {
+    setError(null);
+
+    if (!formData.companyName.trim()) {
+      setError('Please enter your company name');
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await sendCode({ email: formData.email });
+      setCurrentStep(2);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unable to send verification code. Please try again.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStep2Submit = async () => {
+    setError(null);
+
+    if (!otpCode || otpCode.length !== 6) {
+      setError('Please enter the 6-digit code');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await loginWithCode({ code: otpCode });
+      setCurrentStep(3);
+    } catch {
+      setError('Invalid code. Please check and try again.');
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setError(null);
+    setOtpCode('');
+
+    try {
+      setLoading(true);
+      await sendCode({ email: formData.email });
+      setTimeout(() => setLoading(false), 1000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to resend code. Please try again.';
+      setError(message);
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setCurrentStep(1);
+    setFormData({ companyName: '', email: '', type: 'buyer' });
+    setOtpCode('');
+    setError(null);
+    setLoading(false);
+    onClose();
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       PaperProps={{
         sx: {
           borderRadius: "16px",
@@ -55,6 +194,19 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
       <DialogContent sx={{ p: "48px !important" }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
+          {currentStep !== 3 && (
+            <Typography
+              sx={{
+                fontSize: "13px",
+                color: "#999999",
+                fontFamily: "inherit",
+                mb: 2,
+                fontWeight: 500,
+              }}
+            >
+              Step {currentStep} of 2
+            </Typography>
+          )}
           <Typography
             sx={{
               fontWeight: 700,
@@ -65,110 +217,226 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
               fontFamily: "inherit",
             }}
           >
-            Get started
+            {currentStep === 1 && "Get started"}
+            {currentStep === 2 && "Verify your email"}
+            {currentStep === 3 && "Almost there"}
           </Typography>
           <Typography sx={{ fontSize: "15px", color: "#777777", fontFamily: "inherit" }}>
-            Tell us about your business.
+            {currentStep === 1 && "Tell us about your business."}
+            {currentStep === 2 && "Enter the code we sent to your email."}
+            {currentStep === 3 && "Setting up your account..."}
           </Typography>
         </Box>
 
-        {/* Fields */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-          <TextField
-            label="Company Name"
-            placeholder="Acme Inc."
-            fullWidth
-            variant="outlined"
-            sx={inputSx}
-          />
-          <TextField
-            label="Email"
-            placeholder="you@company.com"
-            type="email"
-            fullWidth
-            variant="outlined"
-            sx={inputSx}
-          />
-          <TextField
-            label="Wallet Address"
-            placeholder="0x..."
-            fullWidth
-            variant="outlined"
-            sx={inputSx}
-          />
+        {/* Step 1 */}
+        {currentStep === 1 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            {error && (
+              <Alert severity="error" sx={{ borderRadius: "10px" }}>
+                {error}
+              </Alert>
+            )}
 
-          {/* Role selector */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Typography
-              sx={{ fontSize: "14px", fontWeight: 500, color: "#333333", fontFamily: "inherit" }}
+            <TextField
+              label="Company Name"
+              placeholder="Acme Inc."
+              fullWidth
+              variant="outlined"
+              value={formData.companyName}
+              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+              sx={inputSx}
+            />
+
+            <TextField
+              label="Email"
+              placeholder="you@company.com"
+              type="email"
+              fullWidth
+              variant="outlined"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              sx={inputSx}
+            />
+
+            {/* Role selector */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography
+                sx={{ fontSize: "14px", fontWeight: 500, color: "#333333", fontFamily: "inherit" }}
+              >
+                I am a
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button
+                  fullWidth
+                  onClick={() => setFormData({ ...formData, type: 'buyer' })}
+                  sx={{
+                    borderRadius: "10px",
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    backgroundColor: formData.type === "buyer" ? "#171717" : "#FFFFFF",
+                    color: formData.type === "buyer" ? "#FFFFFF" : "#000000",
+                    border: formData.type === "buyer" ? "none" : "1px solid #E0E0E0",
+                    boxShadow: formData.type === "buyer" ? "0 1px 3px rgba(0,0,0,0.12)" : "0 1px 2px rgba(0,0,0,0.06)",
+                    "&:hover": {
+                      backgroundColor: formData.type === "buyer" ? "#2a2a2a" : "#F5F5F5",
+                    },
+                  }}
+                >
+                  Buyer
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={() => setFormData({ ...formData, type: 'seller' })}
+                  sx={{
+                    borderRadius: "10px",
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    backgroundColor: formData.type === "seller" ? "#171717" : "#FFFFFF",
+                    color: formData.type === "seller" ? "#FFFFFF" : "#000000",
+                    border: formData.type === "seller" ? "none" : "1px solid #E0E0E0",
+                    boxShadow: formData.type === "seller" ? "0 1px 3px rgba(0,0,0,0.12)" : "0 1px 2px rgba(0,0,0,0.06)",
+                    "&:hover": {
+                      backgroundColor: formData.type === "seller" ? "#2a2a2a" : "#F5F5F5",
+                    },
+                  }}
+                >
+                  Seller
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Continue button */}
+            <Button
+              fullWidth
+              onClick={handleStep1Continue}
+              disabled={loading}
+              sx={{
+                mt: 1,
+                backgroundColor: "#171717",
+                color: "#FFFFFF",
+                borderRadius: "10px",
+                py: 1.75,
+                textTransform: "none",
+                fontSize: "15px",
+                fontWeight: 500,
+                fontFamily: "inherit",
+                "&:hover": { backgroundColor: "#2a2a2a" },
+                "&:disabled": { backgroundColor: "#CCCCCC" },
+              }}
             >
-              I am a
+              {loading ? <CircularProgress size={24} sx={{ color: "#FFFFFF" }} /> : "Continue"}
+            </Button>
+          </Box>
+        )}
+
+        {/* Step 2 */}
+        {currentStep === 2 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <Typography sx={{ fontSize: "15px", color: "#777777", fontFamily: "inherit", mb: 1 }}>
+              We sent a 6-digit code to <strong>{formData.email}</strong>
             </Typography>
-            <Box sx={{ display: "flex", gap: 1.5 }}>
+
+            {error && (
+              <Alert severity="error" sx={{ borderRadius: "10px" }}>
+                {error}
+              </Alert>
+            )}
+
+            <TextField
+              label="Verification Code"
+              placeholder="000000"
+              fullWidth
+              variant="outlined"
+              value={otpCode}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setOtpCode(value);
+              }}
+              inputProps={{ maxLength: 6, style: { fontSize: '18px', letterSpacing: '4px', textAlign: 'center' } }}
+              sx={inputSx}
+              autoFocus
+            />
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Button
-                fullWidth
-                onClick={() => setRole("buyer")}
+                onClick={handleResendCode}
+                disabled={loading}
                 sx={{
-                  borderRadius: "10px",
-                  py: 1.5,
                   textTransform: "none",
                   fontSize: "14px",
-                  fontWeight: 500,
+                  color: "#171717",
                   fontFamily: "inherit",
-                  backgroundColor: role === "buyer" ? "#171717" : "#FFFFFF",
-                  color: role === "buyer" ? "#FFFFFF" : "#000000",
-                  border: role === "buyer" ? "none" : "1px solid #E0E0E0",
-                  boxShadow: role === "buyer" ? "0 1px 3px rgba(0,0,0,0.12)" : "0 1px 2px rgba(0,0,0,0.06)",
-                  "&:hover": {
-                    backgroundColor: role === "buyer" ? "#2a2a2a" : "#F5F5F5",
-                  },
+                  "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
                 }}
               >
-                Buyer
+                Resend code
               </Button>
               <Button
-                fullWidth
-                onClick={() => setRole("seller")}
+                onClick={() => setCurrentStep(1)}
                 sx={{
-                  borderRadius: "10px",
-                  py: 1.5,
                   textTransform: "none",
                   fontSize: "14px",
-                  fontWeight: 500,
+                  color: "#777777",
                   fontFamily: "inherit",
-                  backgroundColor: role === "seller" ? "#171717" : "#FFFFFF",
-                  color: role === "seller" ? "#FFFFFF" : "#000000",
-                  border: role === "seller" ? "none" : "1px solid #E0E0E0",
-                  boxShadow: role === "seller" ? "0 1px 3px rgba(0,0,0,0.12)" : "0 1px 2px rgba(0,0,0,0.06)",
-                  "&:hover": {
-                    backgroundColor: role === "seller" ? "#2a2a2a" : "#F5F5F5",
-                  },
+                  "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
                 }}
               >
-                Seller
+                Change email
               </Button>
             </Box>
-          </Box>
 
-          {/* Continue button */}
-          <Button
-            fullWidth
+            <Button
+              fullWidth
+              onClick={handleStep2Submit}
+              disabled={loading || otpCode.length !== 6}
+              sx={{
+                mt: 1,
+                backgroundColor: "#171717",
+                color: "#FFFFFF",
+                borderRadius: "10px",
+                py: 1.75,
+                textTransform: "none",
+                fontSize: "15px",
+                fontWeight: 500,
+                fontFamily: "inherit",
+                "&:hover": { backgroundColor: "#2a2a2a" },
+                "&:disabled": { backgroundColor: "#CCCCCC" },
+              }}
+            >
+              {loading ? <CircularProgress size={24} sx={{ color: "#FFFFFF" }} /> : "Verify"}
+            </Button>
+          </Box>
+        )}
+
+        {/* Step 3 */}
+        {currentStep === 3 && (
+          <Box
             sx={{
-              mt: 1,
-              backgroundColor: "#171717",
-              color: "#FFFFFF",
-              borderRadius: "10px",
-              py: 1.75,
-              textTransform: "none",
-              fontSize: "15px",
-              fontWeight: 500,
-              fontFamily: "inherit",
-              "&:hover": { backgroundColor: "#2a2a2a" },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 3,
+              py: 4,
             }}
           >
-            Continue
-          </Button>
-        </Box>
+            <CircularProgress size={48} sx={{ color: "#171717" }} />
+            <Typography sx={{ fontSize: "16px", color: "#333333", fontFamily: "inherit" }}>
+              Creating your account...
+            </Typography>
+            {error && (
+              <Alert severity="error" sx={{ borderRadius: "10px", width: "100%" }}>
+                {error}
+              </Alert>
+            )}
+          </Box>
+        )}
       </DialogContent>
     </Dialog>
   );

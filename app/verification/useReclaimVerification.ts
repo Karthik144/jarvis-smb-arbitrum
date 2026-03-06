@@ -9,45 +9,25 @@ export function useReclaimVerification() {
   const [proofs, setProofs] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
 
   const startVerification = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setTxHash(null);
 
     try {
       const jsonRequest = await getReclaimConfig();
-
       const reclaimReq = await ReclaimProofRequest.fromJsonString(jsonRequest);
-
       await reclaimReq.triggerReclaimFlow();
 
       await reclaimReq.startSession({
         onSuccess: async (receivedProofs) => {
           console.log("SDK: Proof generated successfully.");
 
-            let normalized: any[] = [];
-            if (receivedProofs) {
-              normalized = Array.isArray(receivedProofs)
-                ? receivedProofs
-                : [receivedProofs];
-            }
-
-            if (normalized.length === 0) {
-              setError("No proof data returned from SDK.");
-              setLoading(false);
-              return;
-            }
-
-            const result = await verifyProofLocally(normalized);
-
-            if (result.success) {
-              setProofs(normalized);
-              console.log("Backend: Proof verified successfully.");
-            } else {
-              setError(result.message || "Backend verification failed.");
-            }
+          const normalized = receivedProofs
+            ? Array.isArray(receivedProofs)
+              ? receivedProofs
+              : [receivedProofs]
+            : [];
 
           if (normalized.length === 0) {
             setError("No proof data returned from SDK.");
@@ -55,12 +35,11 @@ export function useReclaimVerification() {
             return;
           }
 
-          const result = await submitProofToChain(normalized);
+          const result = await verifyProofLocally(normalized);
 
           if (result.success) {
             setProofs(normalized);
-            setTxHash(result.txHash || null);
-            console.log("Backend: Verification and submission successful.");
+            console.log("Backend: Proof verified successfully.");
           } else {
             setError(result.message || "Backend verification failed.");
           }
@@ -80,11 +59,5 @@ export function useReclaimVerification() {
     }
   }, []);
 
-  return {
-    startVerification,
-    proofs,
-    loading,
-    error,
-    txHash,
-  };
+  return { startVerification, proofs, loading, error };
 }

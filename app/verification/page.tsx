@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
   Typography,
@@ -9,16 +9,11 @@ import {
   Alert,
   Card,
   CardContent,
-  TextField,
-  Stack,
 } from "@mui/material";
 import { useReclaimVerification } from "./useReclaimVerification";
 
 export default function Verification() {
-  const [amount, setAmount] = useState<number>(1000);
-  const [percent, setPercent] = useState<number>(20);
-
-  const { startVerification, proofs, loading, error, txHash } =
+  const { startVerification, proofs, loading, error } =
     useReclaimVerification();
 
   const handleStart = () => {
@@ -70,13 +65,7 @@ export default function Verification() {
               ✅ Verification Complete
             </Typography>
             <Typography variant="body2" component="div">
-              Proof received and verified for <strong>${amount}</strong> at{" "}
-              <strong>{percent}%</strong> release.
-              {txHash && (
-                <Typography variant="body2" sx={{ mt: 1, fontWeight: "bold" }}>
-                  Transaction Hash: {txHash}
-                </Typography>
-              )}
+              Proof received and verified successfully.
             </Typography>
           </CardContent>
         </Card>

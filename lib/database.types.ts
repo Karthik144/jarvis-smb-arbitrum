@@ -3,6 +3,16 @@
 
 import { Payment } from './types';
 
+export interface User {
+  id: string;
+  created_at: string;
+  company_name: string;
+  email: string;
+  wallet_address: string;
+  type: 'buyer' | 'seller';
+  privy_user_id: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -16,6 +26,18 @@ export interface Database {
         Update: Partial<Omit<Payment, 'id' | 'created_at'>> & {
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      users: {
+        Row: User;
+        Insert: Omit<User, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<User, 'id' | 'created_at'>> & {
+          created_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

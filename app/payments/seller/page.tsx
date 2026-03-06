@@ -1,3 +1,4 @@
+// app/payments/seller/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -79,21 +80,6 @@ export default function SellerPaymentsPage() {
           Incoming Payments
         </Typography>
 
-<<<<<<< HEAD
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {MOCK_PAYMENTS.map((payment) => (
-            <PaymentCard
-              key={payment.id}
-              variant="seller"
-              company={payment.company}
-              terms={payment.terms}
-              amount={payment.amount}
-              badges={payment.badges}
-              remaining={payment.remaining}
-              onClaim={() => router.push("/verification")}
-            />
-          ))}
-=======
         {/* Claim status banner */}
         {state !== "idle" && (
           <Box
@@ -167,7 +153,6 @@ export default function SellerPaymentsPage() {
               );
             })
           )}
->>>>>>> 3d7c887 (created & deployed FedExEscrow contract)
         </Box>
 
         <Typography
