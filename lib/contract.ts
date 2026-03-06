@@ -173,6 +173,10 @@ export async function releasePayment(
   const paymentId = toPaymentId(params.paymentId);
   const onChainProof = transformProofForChain(params.proof);
 
+  console.log('[releasePayment] raw proof:', JSON.stringify(params.proof, null, 2));
+  console.log('[releasePayment] paymentId (bytes32):', paymentId);
+  console.log('[releasePayment] onChainProof:', JSON.stringify(onChainProof, null, 2));
+
   const escrow = new ethers.Contract(FEDEX_ESCROW_ADDRESS, FEDEX_ESCROW_ABI, signer);
   const tx = await escrow.releasePayment(paymentId, onChainProof);
   const receipt = await tx.wait();
