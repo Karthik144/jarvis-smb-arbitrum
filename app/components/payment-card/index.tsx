@@ -1,4 +1,7 @@
 // app/components/payment-card/index.tsx
+"use client";
+
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -7,6 +10,7 @@ import Badge from "@/app/components/badge";
 interface PaymentCardProps {
   variant: "buyer" | "seller";
   company: string;
+  sellerAddress?: string;
   terms: string;
   amount: string;
   badges: string[];
@@ -20,6 +24,7 @@ interface PaymentCardProps {
 export default function PaymentCard({
   variant,
   company,
+  sellerAddress,
   terms,
   amount,
   badges,
@@ -27,6 +32,14 @@ export default function PaymentCard({
   remaining,
   onClaim,
 }: PaymentCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    if (!sellerAddress) return;
+    navigator.clipboard.writeText(sellerAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
   return (
     <Box
       sx={{
@@ -53,6 +66,24 @@ export default function PaymentCard({
         >
           {company}
         </Typography>
+        {sellerAddress && (
+          <Typography
+            onClick={handleCopy}
+            sx={{
+              fontSize: "12px",
+              color: copied ? "#22a06b" : "#AAAAAA",
+              fontFamily: "monospace",
+              cursor: "pointer",
+              userSelect: "none",
+              transition: "color 0.15s",
+              "&:hover": { color: copied ? "#22a06b" : "#555555" },
+            }}
+          >
+            {copied
+              ? "Copied!"
+              : `${sellerAddress.slice(0, 6)}…${sellerAddress.slice(-4)}`}
+          </Typography>
+        )}
         <Typography
           sx={{ fontSize: "14px", color: "#777777", fontFamily: "inherit" }}
         >
