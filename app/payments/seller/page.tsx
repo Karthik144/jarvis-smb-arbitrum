@@ -192,8 +192,6 @@ export default function SellerPaymentsPage() {
             sx={{
               fontSize: "13px",
               color: "#888888",
-              lineHeight: 1.6,
-              maxWidth: "500px",
               fontFamily: "inherit",
             }}
           >

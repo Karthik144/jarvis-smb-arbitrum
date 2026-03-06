@@ -14,11 +14,28 @@ import {
   useFundWallet,
   useWallets,
 } from "@privy-io/react-auth";
+import { getUserByWalletAddress } from "@/lib/api/users";
+
+const commonButtonStyles = {
+  color: "#000000",
+  textTransform: "none" as const,
+  borderColor: "#E0E0E0",
+  borderRadius: "8px",
+  backgroundColor: "#FFFFFF",
+  fontWeight: 500,
+  fontSize: "14px",
+  px: 2.5,
+  py: 1,
+  "&:hover": {
+    backgroundColor: "#F5F5F5",
+    borderColor: "#CCCCCC",
+  },
+};
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { authenticated } = usePrivy();
+  const { authenticated, user: hookUser } = usePrivy();
   const { wallets } = useWallets();
   const { fundWallet } = useFundWallet();
 
@@ -31,9 +48,7 @@ export default function Navbar() {
   });
 
   const { logout } = useLogout({
-    onSuccess: () => {
-      router.push("/");
-    },
+    onSuccess: () => router.push("/"),
   });
 
   const handleFundWallet = () => {
@@ -44,9 +59,9 @@ export default function Navbar() {
   };
 
   const isPaymentsRoute = pathname?.startsWith("/payments");
-  const isDashboardRoute = pathname === "/dashboard";
+  const isHomeRoute = pathname === "/";
 
-  const handleAuthAction = () => {
+  const handleAuthAction = async () => {
     if (isPaymentsRoute && authenticated) {
       logout();
     } else if (authenticated) {
@@ -87,48 +102,21 @@ export default function Navbar() {
           >
             Jarvis
           </Typography>
-          {authenticated && (
+
+          {authenticated && !isHomeRoute && (
             <Button
               onClick={handleFundWallet}
               variant="outlined"
-              sx={{
-                color: "#000000",
-                textTransform: "none",
-                borderColor: "#E0E0E0",
-                borderRadius: "8px",
-                backgroundColor: "#FFFFFF",
-                fontWeight: 500,
-                fontSize: "14px",
-                px: 2.5,
-                py: 1,
-                mr: 2,
-                "&:hover": {
-                  backgroundColor: "#F5F5F5",
-                  borderColor: "#CCCCCC",
-                },
-              }}
+              sx={{ ...commonButtonStyles, mr: 2 }}
             >
               Add Funds
             </Button>
           )}
+
           <Button
             onClick={handleAuthAction}
             variant="outlined"
-            sx={{
-              color: "#000000",
-              textTransform: "none",
-              borderColor: "#E0E0E0",
-              borderRadius: "8px",
-              backgroundColor: "#FFFFFF",
-              fontWeight: 500,
-              fontSize: "14px",
-              px: 2.5,
-              py: 1,
-              "&:hover": {
-                backgroundColor: "#F5F5F5",
-                borderColor: "#CCCCCC",
-              },
-            }}
+            sx={commonButtonStyles}
           >
             {buttonLabel()}
           </Button>
