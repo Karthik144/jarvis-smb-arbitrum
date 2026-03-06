@@ -21,9 +21,7 @@ const USDC_ADDRESS = RPC_URL.includes("sepolia")
   : USDC_ADDRESS_MAINNET;
 
 // Minimal ERC-20 ABI for balanceOf
-const ERC20_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-];
+const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)"];
 
 interface BalanceCardProps {
   walletAddress: string;
@@ -43,21 +41,26 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
       try {
         setLoading(true);
 
-        // Create provider for Arbitrum
         const provider = new ethers.JsonRpcProvider(RPC_URL);
 
-        // Create contract instance
+        console.log("BalanceCard Debug:", {
+          rpcUrl: RPC_URL,
+          usdcAddress: USDC_ADDRESS,
+          walletAddress,
+        });
+
         const usdcContract = new ethers.Contract(
           USDC_ADDRESS,
           ERC20_ABI,
           provider
         );
 
-        // Fetch balance
         const rawBalance = await usdcContract.balanceOf(walletAddress);
+        console.log("Raw balance:", rawBalance.toString());
 
-        // Format balance (USDC has 6 decimals)
         const balanceInUsdc = Number(rawBalance) / Math.pow(10, USDC_DECIMALS);
+        console.log("Formatted balance:", balanceInUsdc);
+
         const formattedBalance = `$${balanceInUsdc.toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -76,41 +79,16 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
   }, [walletAddress]);
 
   return (
-    <Box
+    <Typography
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#FFFFFF",
-        borderRadius: "12px",
-        border: "1px solid #F0F0F0",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.06)",
-        px: 4,
-        py: 3,
-        mb: 4,
+        fontSize: loading ? "14px" : "42px",
+        fontWeight: loading ? 500 : 700,
+        letterSpacing: loading ? "0" : "-0.5px",
+        color: loading || !balance ? "#999999" : "#000000",
+        fontFamily: "inherit",
       }}
     >
-      <Typography
-        sx={{
-          fontSize: "17px",
-          fontWeight: 600,
-          color: "#000000",
-          fontFamily: "inherit",
-        }}
-      >
-        Wallet Balance
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: loading ? "14px" : "26px",
-          fontWeight: loading ? 500 : 700,
-          letterSpacing: loading ? "0" : "-0.5px",
-          color: loading || !balance ? "#999999" : "#000000",
-          fontFamily: "inherit",
-        }}
-      >
-        {loading ? "Loading..." : balance || "Unavailable"}
-      </Typography>
-    </Box>
+      {loading ? "Loading..." : balance || "Unavailable"}
+    </Typography>
   );
 }
