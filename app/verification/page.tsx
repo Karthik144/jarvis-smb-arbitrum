@@ -22,7 +22,7 @@ export default function Verification() {
     useReclaimVerification();
 
   const handleStart = () => {
-    startVerification(amount, percent);
+    startVerification();
   };
 
   return (
@@ -30,31 +30,6 @@ export default function Verification() {
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
         Jarvis Verification
       </Typography>
-
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Enter the contract details and verify your data via zkTLS.
-      </Typography>
-
-      {!proofs && (
-        <Stack spacing={3} sx={{ mb: 4 }}>
-          <TextField
-            label="Total Amount ($)"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(Number(e.target.value))}
-            fullWidth
-            disabled={loading}
-          />
-          <TextField
-            label="Percent to Release (%)"
-            type="number"
-            value={percent}
-            onChange={(e) => setPercent(Number(e.target.value))}
-            fullWidth
-            disabled={loading}
-          />
-        </Stack>
-      )}
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>

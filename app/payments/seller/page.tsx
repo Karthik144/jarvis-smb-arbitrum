@@ -1,9 +1,8 @@
-// app/payments/seller/page.tsx
 "use client";
 
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import PaymentCard from "@/app/components/payment-card";
+import { Box, Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
 
 const MOCK_PAYMENTS = [
   {
@@ -17,6 +16,8 @@ const MOCK_PAYMENTS = [
 ];
 
 export default function SellerPaymentsPage() {
+  const router = useRouter();
+
   return (
     <Box
       sx={{
@@ -27,7 +28,6 @@ export default function SellerPaymentsPage() {
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {/* Title row */}
         <Typography
           component="h1"
           sx={{
@@ -41,7 +41,6 @@ export default function SellerPaymentsPage() {
           Incoming Payments
         </Typography>
 
-        {/* Payment cards */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {MOCK_PAYMENTS.map((payment) => (
             <PaymentCard
@@ -52,7 +51,7 @@ export default function SellerPaymentsPage() {
               amount={payment.amount}
               badges={payment.badges}
               remaining={payment.remaining}
-              onClaim={() => {}}
+              onClaim={() => router.push("/verification")}
             />
           ))}
         </Box>

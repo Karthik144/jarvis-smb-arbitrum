@@ -2,20 +2,9 @@
 
 import { verifyProof } from "@reclaimprotocol/js-sdk";
 
-export async function submitProofToChain(
-  proofs: any[],
-  totalAmount: number,
-  percentToRelease: number
-) {
+export async function submitProofToChain(proofs: any[]) {
   if (!proofs || proofs.length === 0) {
     return { success: false, message: "No proof data provided." };
-  }
-
-  if (totalAmount <= 0 || percentToRelease < 0 || percentToRelease > 100) {
-    return {
-      success: false,
-      message: "Invalid financial parameters provided.",
-    };
   }
 
   const proof = proofs[0];
@@ -33,8 +22,6 @@ export async function submitProofToChain(
 
     console.log("--- Verification Payload ---");
     console.log("Verified Data:", extractedData);
-    console.log("Total Amount:", totalAmount);
-    console.log("Release Percentage:", percentToRelease + "%");
 
     console.log(
       "Simulating contract call: verifyAndRelease(proof, amount, percent)..."
@@ -48,8 +35,6 @@ export async function submitProofToChain(
     return {
       success: true,
       data: {
-        amountProcessed: totalAmount,
-        releaseRate: percentToRelease,
         verifiedData: extractedData,
       },
       txHash: fakeTxHash,
