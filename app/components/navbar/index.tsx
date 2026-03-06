@@ -13,9 +13,9 @@ export default function Navbar() {
   const { authenticated } = usePrivy();
 
   const { login } = useLogin({
-    onComplete: ({ user, isNewUser, wasAlreadyAuthenticated }) => {
+    onComplete: ({ wasAlreadyAuthenticated }) => {
       if (!wasAlreadyAuthenticated) {
-        router.push("/validation");
+        router.push("/dashboard");
       }
     },
   });
@@ -30,18 +30,44 @@ export default function Navbar() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar>
+      <AppBar
+        position="static"
+        elevation={0}
+        sx={{ backgroundColor: "#FFFFFF", borderBottom: "none" }}
+      >
+        <Toolbar sx={{ px: 7, py: "20px", minHeight: "unset !important" }}>
           <Typography
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1, color: "black" }}
+            sx={{
+              flexGrow: 1,
+              color: "#000000",
+              fontWeight: 700,
+              fontSize: "20px",
+              letterSpacing: "-0.3px",
+              fontFamily: "inherit",
+            }}
           >
             Jarvis
           </Typography>
           <Button
             onClick={handleAuthAction}
-            sx={{ color: "black", textTransform: "none" }}
+            variant="outlined"
+            sx={{
+              color: "#000000",
+              textTransform: "none",
+              borderColor: "#E0E0E0",
+              borderRadius: "8px",
+              backgroundColor: "#FFFFFF",
+              fontWeight: 500,
+              fontSize: "14px",
+              px: 2.5,
+              py: 1,
+              "&:hover": {
+                backgroundColor: "#F5F5F5",
+                borderColor: "#CCCCCC",
+              },
+            }}
           >
             {authenticated ? "Dashboard" : "Login"}
           </Button>
