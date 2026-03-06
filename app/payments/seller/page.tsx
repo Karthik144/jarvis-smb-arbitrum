@@ -14,7 +14,9 @@ export default function SellerPaymentsPage() {
   const { wallets } = useWallets();
   const { claimPayment, state, txHash, error, reset } = useClaimPayment();
 
-  const sellerAddress = wallets.find((w) => w.walletClientType === "privy")?.address;
+  const sellerAddress = wallets.find(
+    (w) => w.walletClientType === "privy"
+  )?.address;
 
   const fetchPayments = useCallback(async () => {
     if (!sellerAddress) return;
@@ -84,8 +86,19 @@ export default function SellerPaymentsPage() {
         {state !== "idle" && (
           <Box
             sx={{
-              backgroundColor: state === "error" ? "#fff0f0" : state === "done" ? "#f0fff4" : "#f5f5f5",
-              border: `1px solid ${state === "error" ? "#ffcccc" : state === "done" ? "#b7ebc8" : "#e0e0e0"}`,
+              backgroundColor:
+                state === "error"
+                  ? "#fff0f0"
+                  : state === "done"
+                  ? "#f0fff4"
+                  : "#f5f5f5",
+              border: `1px solid ${
+                state === "error"
+                  ? "#ffcccc"
+                  : state === "done"
+                  ? "#b7ebc8"
+                  : "#e0e0e0"
+              }`,
               borderRadius: "10px",
               px: 3,
               py: 2,
@@ -97,7 +110,12 @@ export default function SellerPaymentsPage() {
             <Typography
               sx={{
                 fontSize: "14px",
-                color: state === "error" ? "#d32f2f" : state === "done" ? "#2e7d32" : "#555555",
+                color:
+                  state === "error"
+                    ? "#d32f2f"
+                    : state === "done"
+                    ? "#2e7d32"
+                    : "#555555",
                 fontFamily: "inherit",
                 wordBreak: "break-all",
               }}
@@ -134,39 +152,51 @@ export default function SellerPaymentsPage() {
           ) : (
             payments.map((payment) => {
               const remaining = (
-                (parseFloat(payment.total_amount) * payment.remaining_percentage) /
+                (parseFloat(payment.total_amount) *
+                  payment.remaining_percentage) /
                 100
               ).toFixed(2);
               const isCompleted = payment.status === "completed";
-              const isClaiming = state !== "idle" && state !== "done" && state !== "error";
+              const isClaiming =
+                state !== "idle" && state !== "done" && state !== "error";
               return (
                 <PaymentCard
                   key={payment.id}
                   variant="seller"
                   company={`From: ${payment.buyer_address}`}
                   terms={`${payment.upfront_percentage}% paid upfront, ${payment.remaining_percentage}% on delivery verification`}
-                  amount={`$${parseFloat(payment.total_amount).toLocaleString()} USDC`}
+                  amount={`$${parseFloat(
+                    payment.total_amount
+                  ).toLocaleString()} USDC`}
                   badges={isCompleted ? ["Completed"] : ["Pending Claim"]}
-                  remaining={isCompleted ? undefined : `$${remaining} remaining`}
-                  onClaim={isCompleted || isClaiming ? undefined : () => claimPayment(payment)}
+                  remaining={
+                    isCompleted ? undefined : `$${remaining} remaining`
+                  }
+                  onClaim={
+                    isCompleted || isClaiming
+                      ? undefined
+                      : () => claimPayment(payment)
+                  }
                 />
               );
             })
           )}
         </Box>
 
-        <Typography
-          sx={{
-            fontSize: "13px",
-            color: "#888888",
-            lineHeight: 1.6,
-            maxWidth: "500px",
-            fontFamily: "inherit",
-          }}
-        >
-          Clicking Claim will open a QR code. Scan it with your phone to verify
-          delivery via FedEx tracking through Reclaim Protocol.
-        </Typography>
+        {payments.length !== 0 ? (
+          <Typography
+            sx={{
+              fontSize: "13px",
+              color: "#888888",
+              lineHeight: 1.6,
+              maxWidth: "500px",
+              fontFamily: "inherit",
+            }}
+          >
+            Clicking Claim will open a QR code. Scan it with your phone to
+            verify delivery via FedEx tracking through Reclaim Protocol.
+          </Typography>
+        ) : null}
       </Box>
     </Box>
   );
