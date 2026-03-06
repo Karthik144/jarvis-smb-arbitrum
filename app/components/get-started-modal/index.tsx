@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
+import React, { useState, useEffect, useRef } from "react";
+import { useLoginWithEmail, usePrivy, useCreateWallet } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -21,6 +21,7 @@ interface GetStartedModalProps {
 export default function GetStartedModal({ open, onClose }: GetStartedModalProps) {
   const router = useRouter();
   const { user } = usePrivy();
+  const { createWallet } = useCreateWallet();
   const { sendCode, loginWithCode } = useLoginWithEmail({
     onError: (error) => {
       console.error('Privy login error:', error);
@@ -37,6 +38,7 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const accountCreationStarted = useRef(false);
 
   const inputSx = {
     "& .MuiOutlinedInput-root": {
@@ -69,21 +71,27 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
   // Handle account creation after Privy auth
   useEffect(() => {
     async function createAccount() {
-      if (currentStep !== 3 || !user) return;
+      if (currentStep !== 3 || !user || accountCreationStarted.current) return;
+      accountCreationStarted.current = true;
 
       try {
-        const embeddedWallet = user.linkedAccounts.find(
+        // Create the embedded wallet (or retrieve it if one already exists)
+        let walletAddress: string;
+        const existingWallet = user.linkedAccounts.find(
           (account) => account.type === 'wallet' && account.walletClientType === 'privy'
         );
 
-        if (!embeddedWallet || !('address' in embeddedWallet)) {
-          throw new Error('Embedded wallet not found');
+        if (existingWallet && 'address' in existingWallet) {
+          walletAddress = existingWallet.address as string;
+        } else {
+          const wallet = await createWallet();
+          walletAddress = wallet.address;
         }
 
         await createUser({
           company_name: formData.companyName,
           email: formData.email,
-          wallet_address: embeddedWallet.address as string,
+          wallet_address: walletAddress,
           type: formData.type,
           privy_user_id: user.id,
         });
@@ -91,9 +99,11 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
         const redirectPath = formData.type === 'buyer' ? '/payments/buyer' : '/payments/seller';
         router.push(redirectPath);
       } catch (err: unknown) {
+        accountCreationStarted.current = false;
         if (err instanceof DuplicateEmailError) {
           setError(err.message);
         } else {
+          console.error('Account creation error:', err);
           setError('Unable to create account. Please try again.');
         }
         setCurrentStep(2);
@@ -101,6 +111,7 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
     }
 
     createAccount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, user]);
 
   const handleStep1Continue = async () => {
@@ -173,6 +184,7 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
     setOtpCode('');
     setError(null);
     setLoading(false);
+    accountCreationStarted.current = false;
     onClose();
   };
 

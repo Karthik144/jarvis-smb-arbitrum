@@ -12,7 +12,6 @@ import { Payment } from "@/lib/types";
 
 function paymentBadges(payment: Payment): string[] {
   switch (payment.status) {
-    case "escrow_created":
     case "upfront_paid":
       return ["Initial Paid", "Awaiting Delivery"];
     case "delivered":

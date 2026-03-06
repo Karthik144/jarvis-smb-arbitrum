@@ -1,7 +1,6 @@
 // Payment status types
 export type PaymentStatus =
   | 'pending'
-  | 'escrow_created'
   | 'upfront_paid'
   | 'delivered'
   | 'completed';

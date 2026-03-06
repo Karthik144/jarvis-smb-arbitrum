@@ -129,7 +129,7 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
       await fetch(`/api/payments/${paymentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "escrow_created" }),
+        body: JSON.stringify({ status: "upfront_paid" }),
       });
 
       reset();
