@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import PaymentCard from "@/app/components/payment-card";
+import BalanceCard from "@/app/components/balance-card";
 import { useWallets } from "@privy-io/react-auth";
 import { Payment } from "@/lib/types";
 import { useClaimPayment } from "./useClaimPayment";
@@ -69,6 +70,9 @@ export default function SellerPaymentsPage() {
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {/* Balance Card */}
+        {sellerAddress && <BalanceCard walletAddress={sellerAddress} />}
+
         <Typography
           component="h1"
           sx={{
