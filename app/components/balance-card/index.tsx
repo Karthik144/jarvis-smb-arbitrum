@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { ethers } from "ethers";
+
+// USDC contract on Arbitrum mainnet
+const USDC_ADDRESS = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+const USDC_DECIMALS = 6;
+
+// Minimal ERC-20 ABI for balanceOf
+const ERC20_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+];
 
 interface BalanceCardProps {
   walletAddress: string;
@@ -13,8 +23,47 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Balance fetching logic will go here
-    setLoading(false);
+    async function fetchBalance() {
+      if (!walletAddress) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // Create provider for Arbitrum
+        const provider = new ethers.JsonRpcProvider(
+          "https://arb1.arbitrum.io/rpc"
+        );
+
+        // Create contract instance
+        const usdcContract = new ethers.Contract(
+          USDC_ADDRESS,
+          ERC20_ABI,
+          provider
+        );
+
+        // Fetch balance
+        const rawBalance = await usdcContract.balanceOf(walletAddress);
+
+        // Format balance (USDC has 6 decimals)
+        const balanceInUsdc = Number(rawBalance) / Math.pow(10, USDC_DECIMALS);
+        const formattedBalance = `$${balanceInUsdc.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} USDC`;
+
+        setBalance(formattedBalance);
+      } catch (error) {
+        console.error("Failed to fetch USDC balance:", error);
+        setBalance(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBalance();
   }, [walletAddress]);
 
   return (
