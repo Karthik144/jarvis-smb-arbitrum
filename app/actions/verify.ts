@@ -2,7 +2,13 @@
 
 import { verifyProof } from "@reclaimprotocol/js-sdk";
 
-export async function submitProofToChain(proofs: any[]) {
+/**
+ * Verifies a Reclaim proof locally (cryptographic signature check).
+ * Returns success + the proof object so the client can submit it on-chain.
+ */
+export async function verifyProofLocally(
+  proofs: any[]
+): Promise<{ success: boolean; message?: string; proof?: any }> {
   if (!proofs || proofs.length === 0) {
     return { success: false, message: "No proof data provided." };
   }
@@ -10,41 +16,12 @@ export async function submitProofToChain(proofs: any[]) {
   const proof = proofs[0];
 
   try {
-    const isLocalValid = await verifyProof(proof);
-
-    if (!isLocalValid) {
-      console.error("Local proof verification failed.");
+    const isValid = await verifyProof(proof);
+    if (!isValid) {
       return { success: false, message: "Invalid cryptographic signature." };
     }
-
-    const context = JSON.parse(proof.claimData.context);
-    const extractedData = context.extractedParameters;
-
-    console.log("--- Verification Payload ---");
-    console.log("Verified Data:", extractedData);
-
-    console.log(
-      "Simulating contract call: verifyAndRelease(proof, amount, percent)..."
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const fakeTxHash =
-      "0x" + Math.random().toString(16).substring(2, 42).padEnd(40, "0");
-
-    return {
-      success: true,
-      data: {
-        verifiedData: extractedData,
-      },
-      txHash: fakeTxHash,
-    };
+    return { success: true, proof };
   } catch (error: any) {
-    console.error("Server action execution error:", error);
-    return {
-      success: false,
-      message:
-        "Failed to process secure verification. Please check server logs.",
-    };
+    return { success: false, message: error.message || "Proof verification failed." };
   }
 }

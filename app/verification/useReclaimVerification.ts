@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ReclaimProofRequest } from "@reclaimprotocol/js-sdk";
-import { submitProofToChain } from "@/app/actions/verify";
+import { verifyProofLocally } from "@/app/actions/verify";
 import { getReclaimConfig } from "@/app/actions/config";
 
 export function useReclaimVerification() {
@@ -27,12 +27,27 @@ export function useReclaimVerification() {
         onSuccess: async (receivedProofs) => {
           console.log("SDK: Proof generated successfully.");
 
-          let normalized: any[] = [];
-          if (receivedProofs) {
-            normalized = Array.isArray(receivedProofs)
-              ? receivedProofs
-              : [receivedProofs];
-          }
+            let normalized: any[] = [];
+            if (receivedProofs) {
+              normalized = Array.isArray(receivedProofs)
+                ? receivedProofs
+                : [receivedProofs];
+            }
+
+            if (normalized.length === 0) {
+              setError("No proof data returned from SDK.");
+              setLoading(false);
+              return;
+            }
+
+            const result = await verifyProofLocally(normalized);
+
+            if (result.success) {
+              setProofs(normalized);
+              console.log("Backend: Proof verified successfully.");
+            } else {
+              setError(result.message || "Backend verification failed.");
+            }
 
           if (normalized.length === 0) {
             setError("No proof data returned from SDK.");

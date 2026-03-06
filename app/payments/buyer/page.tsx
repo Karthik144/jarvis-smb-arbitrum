@@ -1,26 +1,52 @@
 // app/payments/buyer/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import PaymentCard from "@/app/components/payment-card";
 import NewPaymentModal from "@/app/components/new-payment-modal";
+import { useWallets } from "@privy-io/react-auth";
+import { Payment } from "@/lib/types";
 
-const MOCK_PAYMENTS = [
-  {
-    id: "1",
-    company: "Acme Inc.",
-    terms: "25% at start, 75% on delivery",
-    amount: "$5,000",
-    badges: ["Initial Paid", "Awaiting Delivery"],
-    paid: "$1,250 paid",
-  },
-];
+function paymentBadges(payment: Payment): string[] {
+  switch (payment.status) {
+    case "escrow_created":
+    case "upfront_paid":
+      return ["Initial Paid", "Awaiting Delivery"];
+    case "delivered":
+      return ["Delivered", "Pending Release"];
+    case "completed":
+      return ["Completed"];
+    default:
+      return ["Pending"];
+  }
+}
 
 export default function BuyerPaymentsPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const { wallets } = useWallets();
+
+  const buyerAddress = wallets.find((w) => w.walletClientType === "privy")?.address;
+
+  const fetchPayments = useCallback(async () => {
+    if (!buyerAddress) return;
+    const res = await fetch("/api/payments");
+    const json = await res.json();
+    if (json.success) {
+      setPayments(
+        (json.data as Payment[]).filter(
+          (p) => p.buyer_address.toLowerCase() === buyerAddress.toLowerCase()
+        )
+      );
+    }
+  }, [buyerAddress]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
 
   return (
     <>
@@ -74,22 +100,40 @@ export default function BuyerPaymentsPage() {
 
           {/* Payment cards */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {MOCK_PAYMENTS.map((payment) => (
-              <PaymentCard
-                key={payment.id}
-                variant="buyer"
-                company={payment.company}
-                terms={payment.terms}
-                amount={payment.amount}
-                badges={payment.badges}
-                paid={payment.paid}
-              />
-            ))}
+            {payments.length === 0 ? (
+              <Typography
+                sx={{ fontSize: "14px", color: "#999999", fontFamily: "inherit" }}
+              >
+                No payments yet. Create your first payment above.
+              </Typography>
+            ) : (
+              payments.map((payment) => {
+                const upfrontPaid = (
+                  (parseFloat(payment.total_amount) * payment.upfront_percentage) /
+                  100
+                ).toFixed(2);
+                return (
+                  <PaymentCard
+                    key={payment.id}
+                    variant="buyer"
+                    company={payment.seller_address}
+                    terms={`${payment.upfront_percentage}% upfront, ${payment.remaining_percentage}% on delivery`}
+                    amount={`$${parseFloat(payment.total_amount).toLocaleString()} USDC`}
+                    badges={paymentBadges(payment)}
+                    paid={`$${upfrontPaid} paid`}
+                  />
+                );
+              })
+            )}
           </Box>
         </Box>
       </Box>
 
-      <NewPaymentModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <NewPaymentModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={fetchPayments}
+      />
     </>
   );
 }

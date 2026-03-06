@@ -1,0 +1,19 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.26"
+
+remappings = [
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "reclaim-verifier-foundry/=lib/reclaim-verifier-foundry/src/",
+  "forge-std/=lib/forge-std/src/"
+]
+
+[rpc_endpoints]
+arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
+arbitrum_one = "${NEXT_PUBLIC_ARBITRUM_RPC_URL}"
+
+[etherscan]
+arbitrum_sepolia = { key = "${ARBISCAN_API_KEY}", url = "https://api.etherscan.io/v2/api?chainid=421614" }
+arbitrum_one = { key = "${ARBISCAN_API_KEY}", url = "https://api.etherscan.io/v2/api?chainid=42161" }
