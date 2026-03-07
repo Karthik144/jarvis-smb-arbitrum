@@ -149,7 +149,7 @@ export default function LenderPaymentsPage() {
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {/* Balance Card */}
-        {lenderAddress && <BalanceCard walletAddress={lenderAddress} />}
+        {lenderAddress && <BalanceCard walletAddress={lenderAddress} showContractBalance={true} />}
 
         <Typography
           component="h1"

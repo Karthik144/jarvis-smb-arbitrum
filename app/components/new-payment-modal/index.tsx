@@ -238,18 +238,21 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
               }
             }}
             disabled={loading}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} key={option.id}>
-                <Box>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 600, fontFamily: "inherit" }}>
-                    {option.name}
-                  </Typography>
-                  <Typography sx={{ fontSize: "12px", color: "#777", fontFamily: "inherit" }}>
-                    {option.wallet_address.slice(0, 6)}…{option.wallet_address.slice(-4)}
-                  </Typography>
+            renderOption={(props, option) => {
+              const { key, ...otherProps } = props;
+              return (
+                <Box component="li" {...otherProps} key={option.id}>
+                  <Box>
+                    <Typography sx={{ fontSize: "14px", fontWeight: 600, fontFamily: "inherit" }}>
+                      {option.name}
+                    </Typography>
+                    <Typography sx={{ fontSize: "12px", color: "#777", fontFamily: "inherit" }}>
+                      {option.wallet_address.slice(0, 6)}…{option.wallet_address.slice(-4)}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            )}
+              );
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
