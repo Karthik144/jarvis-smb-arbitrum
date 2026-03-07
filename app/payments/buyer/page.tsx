@@ -8,6 +8,7 @@ import PaymentCard from "@/app/components/payment-card";
 import NewPaymentModal from "@/app/components/new-payment-modal";
 import BalanceCard from "@/app/components/balance-card";
 import ContactsModal from "@/app/components/contacts-modal";
+import RoleSwitcher from "@/app/components/role-switcher";
 import { useWallets } from "@privy-io/react-auth";
 import { Payment, Contact } from "@/lib/types";
 
@@ -79,6 +80,8 @@ export default function BuyerPaymentsPage() {
         }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <RoleSwitcher />
+
           {buyerAddress && <BalanceCard walletAddress={buyerAddress} showEscrowBalance={true} userRole="buyer" />}
 
           <Box

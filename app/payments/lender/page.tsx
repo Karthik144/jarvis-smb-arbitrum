@@ -9,6 +9,7 @@ import PaymentCard from "@/app/components/payment-card";
 import BalanceCard from "@/app/components/balance-card";
 import DepositModal from "@/app/components/deposit-modal";
 import WithdrawModal from "@/app/components/withdraw-modal";
+import RoleSwitcher from "@/app/components/role-switcher";
 import { useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { createLendingOffer, withdrawFromLendingOffer } from "@/lib/contract";
@@ -152,6 +153,8 @@ export default function LenderPaymentsPage() {
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <RoleSwitcher />
+
         {/* Balance Card */}
         {lenderAddress && <BalanceCard walletAddress={lenderAddress} showContractBalance={true} />}
 

@@ -6,6 +6,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import PaymentCard from "@/app/components/payment-card";
 import BalanceCard from "@/app/components/balance-card";
+import RoleSwitcher from "@/app/components/role-switcher";
 import { useWallets } from "@privy-io/react-auth";
 import { Payment } from "@/lib/types";
 import { useClaimPayment } from "./useClaimPayment";
@@ -70,6 +71,8 @@ export default function SellerPaymentsPage() {
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <RoleSwitcher />
+
         {/* Balance Card */}
         {sellerAddress && <BalanceCard walletAddress={sellerAddress} showEscrowBalance={true} userRole="seller" />}
 
