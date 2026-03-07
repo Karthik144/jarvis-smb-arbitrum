@@ -126,6 +126,8 @@ export default function NewPaymentModal({ open, onClose, onSuccess }: NewPayment
       if (!json.success) throw new Error(json.error || "Failed to save payment.");
       const paymentId: string = json.data.id;
 
+      await wallet.switchChain(421614); // Arbitrum Sepolia
+
       const provider = await wallet.getEthereumProvider();
       const ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();

@@ -58,6 +58,8 @@ export default function LenderPaymentsPage() {
     }
 
     try {
+      await wallet.switchChain(46630); // Robinhood Testnet
+
       const provider = await wallet.getEthereumProvider();
       const ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();
@@ -108,6 +110,8 @@ export default function LenderPaymentsPage() {
     }
 
     try {
+      await wallet.switchChain(46630); // Robinhood Testnet
+
       const provider = await wallet.getEthereumProvider();
       const ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();
