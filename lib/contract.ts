@@ -68,6 +68,16 @@ export const FEDEX_ESCROW_ABI = [
     outputs: [],
   },
   {
+    name: 'redirectPayment',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'paymentId', type: 'bytes32' },
+      { name: 'newReceiver', type: 'address' },
+    ],
+    outputs: [],
+  },
+  {
     name: 'getEscrow',
     type: 'function',
     stateMutability: 'view',
@@ -268,6 +278,38 @@ export const INVOICE_FACTORING_ABI = [
     ],
     outputs: [],
   },
+  {
+    name: 'getInvoice',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'invoiceId', type: 'bytes32' }],
+    outputs: [
+      {
+        type: 'tuple',
+        components: [
+          { name: 'invoiceId', type: 'bytes32' },
+          { name: 'seller', type: 'address' },
+          { name: 'lenderOfferId', type: 'uint256' },
+          { name: 'totalInvoiceAmount', type: 'uint256' },
+          { name: 'upfrontPaid', type: 'uint256' },
+          { name: 'factoredAmount', type: 'uint256' },
+          { name: 'payoutToSeller', type: 'uint256' },
+          { name: 'settled', type: 'bool' },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'InvoiceFactored',
+    type: 'event',
+    inputs: [
+      { name: 'invoiceId', type: 'bytes32', indexed: true },
+      { name: 'seller', type: 'address', indexed: true },
+      { name: 'lenderOfferId', type: 'uint256', indexed: true },
+      { name: 'factoredAmount', type: 'uint256', indexed: false },
+      { name: 'payoutToSeller', type: 'uint256', indexed: false },
+    ],
+  },
 ] as const;
 
 /**
@@ -371,6 +413,93 @@ export async function withdrawFromLendingOffer(
   const rawAmount = parseUSDC(params.amountUSD);
   const factoring = new ethers.Contract(INVOICE_FACTORING_ADDRESS, INVOICE_FACTORING_ABI, signer);
   const tx = await factoring.withdrawFromOffer(params.offerId, rawAmount);
+  const receipt = await tx.wait();
+  return receipt.hash;
+}
+
+/**
+ * Calls factorInvoice on the InvoiceFactoring contract (Robinhood testnet).
+ * Returns the matched lender address and transaction hash.
+ * NOTE: Caller must already be on Robinhood testnet (chainId 46630).
+ */
+export async function factorInvoice(
+  signer: ethers.Signer,
+  params: {
+    invoiceId: string;        // bytes32 hex string
+    totalInvoiceAmount: number;
+    upfrontPaid: number;
+    factoredAmount: number;
+    discountRate: 5 | 10;
+  }
+): Promise<{ lenderAddress: string; txHash: string }> {
+  const factoring = new ethers.Contract(INVOICE_FACTORING_ADDRESS, INVOICE_FACTORING_ABI, signer);
+
+  const totalRaw = parseUSDC(params.totalInvoiceAmount);
+  const upfrontRaw = parseUSDC(params.upfrontPaid);
+  const factoredRaw = parseUSDC(params.factoredAmount);
+
+  const tx = await factoring.factorInvoice(
+    params.invoiceId,
+    totalRaw,
+    upfrontRaw,
+    factoredRaw,
+    params.discountRate,
+  );
+  const receipt = await tx.wait();
+
+  // Parse InvoiceFactored event to get matched lenderOfferId
+  let lenderOfferId: string | null = null;
+  for (const log of receipt.logs) {
+    try {
+      const parsed = factoring.interface.parseLog(log);
+      if (parsed?.name === 'InvoiceFactored') {
+        lenderOfferId = parsed.args.lenderOfferId.toString();
+        break;
+      }
+    } catch { /* skip unparseable logs */ }
+  }
+
+  if (!lenderOfferId) throw new Error('InvoiceFactored event not found in receipt');
+
+  // Fetch the lender address from the matched offer
+  const offer = await factoring.getOffer(lenderOfferId);
+  return { lenderAddress: offer.lender, txHash: receipt.hash };
+}
+
+/**
+ * Calls redirectPayment on the FedExEscrow contract (Arbitrum Sepolia).
+ * Points the escrow receiver to the lender so they collect on delivery.
+ * NOTE: Caller must already be on Arbitrum Sepolia (chainId 421614).
+ */
+export async function redirectPaymentToLender(
+  signer: ethers.Signer,
+  params: {
+    paymentId: string;    // Supabase UUID — converted to bytes32 internally
+    lenderAddress: string;
+  }
+): Promise<string> {
+  const paymentId = toPaymentId(params.paymentId);
+  const escrow = new ethers.Contract(FEDEX_ESCROW_ADDRESS, FEDEX_ESCROW_ABI, signer);
+
+  const signerAddress = await signer.getAddress();
+  console.log('[redirectPaymentToLender] paymentId (bytes32):', paymentId);
+  console.log('[redirectPaymentToLender] lenderAddress:', params.lenderAddress);
+  console.log('[redirectPaymentToLender] signer (msg.sender):', signerAddress);
+
+  const escrowData = await escrow.getEscrow(paymentId);
+  console.log('[redirectPaymentToLender] escrow.buyer:', escrowData.buyer);
+  console.log('[redirectPaymentToLender] escrow.seller:', escrowData.seller);
+  console.log('[redirectPaymentToLender] escrow.status:', escrowData.status.toString()); // 0=Active, 1=Released, 2=Cancelled
+
+  if (escrowData.seller === ethers.ZeroAddress) {
+    throw new Error('Escrow not found for this paymentId. Has the buyer created the escrow?');
+  }
+  if (escrowData.seller.toLowerCase() !== signerAddress.toLowerCase()) {
+    throw new Error(`Seller mismatch. Escrow seller: ${escrowData.seller}, your address: ${signerAddress}`);
+  }
+
+
+  const tx = await escrow.redirectPayment(paymentId, params.lenderAddress);
   const receipt = await tx.wait();
   return receipt.hash;
 }

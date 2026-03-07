@@ -8,6 +8,8 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { Payment } from "@/lib/types";
 import { ethers } from "ethers";
+import { useWallets } from "@privy-io/react-auth";
+import { factorInvoice, redirectPaymentToLender } from "@/lib/contract";
 
 interface FactorInvoiceModalProps {
   open: boolean;
@@ -16,13 +18,19 @@ interface FactorInvoiceModalProps {
   onSuccess: () => void;
 }
 
+type FactorStep = "idle" | "factoring" | "redirecting" | "done" | "error";
+
+const ROBINHOOD_CHAIN_ID = 46630;
+const ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
+
 export default function FactorInvoiceModal({
   open,
   onClose,
   payment,
   onSuccess,
 }: FactorInvoiceModalProps) {
-  const [loading, setLoading] = useState(false);
+  const { wallets } = useWallets();
+  const [step, setStep] = useState<FactorStep>("idle");
   const [error, setError] = useState<string | null>(null);
   const [selectedRate, setSelectedRate] = useState<5 | 10>(10);
 
@@ -32,45 +40,71 @@ export default function FactorInvoiceModal({
   const remainingAmount = totalAmount - upfrontPaid;
 
   const payoutAmount = remainingAmount * (100 - selectedRate) / 100;
-  const lenderReturn = remainingAmount;
+
+  function stepLabel(): string {
+    switch (step) {
+      case "factoring":   return "Step 1/2: Factoring invoice on Robinhood…";
+      case "redirecting": return "Step 2/2: Redirecting escrow payment to lender on Arbitrum…";
+      case "done":        return "Invoice factored! Payment redirected to lender.";
+      case "error":       return `Error: ${error}`;
+      default:            return "";
+    }
+  }
+
+  async function getSignerOnChain(wallet: any, chainId: number): Promise<ethers.Signer> {
+    await wallet.switchChain(chainId);
+    const provider = await wallet.getEthereumProvider();
+    const ethersProvider = new ethers.BrowserProvider(provider);
+
+    // Verify the switch actually took effect
+    const network = await ethersProvider.getNetwork();
+    if (Number(network.chainId) !== chainId) {
+      throw new Error(
+        `Chain switch failed. Expected chainId ${chainId}, got ${network.chainId}. Please switch manually and try again.`
+      );
+    }
+
+    return ethersProvider.getSigner();
+  }
 
   const handleSubmit = async () => {
-    setLoading(true);
+    setStep("factoring");
     setError(null);
 
     try {
-      // Generate invoice ID (hash of payment ID)
-      const invoiceId = ethers.keccak256(ethers.toUtf8Bytes(payment.id));
+      const wallet = wallets.find((w) => w.walletClientType === "privy");
+      if (!wallet) throw new Error("No wallet connected.");
 
-      const response = await fetch("/api/factored-invoices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          payment_id: payment.id,
-          seller_address: payment.seller_address,
-          lender_offer_id: "0", // Will be matched later
-          invoice_id: invoiceId,
-          total_invoice_amount: totalAmount.toString(),
-          upfront_paid: upfrontPaid.toString(),
-          factored_amount: remainingAmount.toString(),
-          payout_to_seller: payoutAmount.toString(),
-          discount_rate: selectedRate,
-          status: "pending",
-        }),
+      // --- Step 1: factorInvoice on Robinhood testnet ---
+      const robinhoodSigner = await getSignerOnChain(wallet, ROBINHOOD_CHAIN_ID);
+
+      // Use payment.id + timestamp so the same payment can be factored repeatedly in demos
+      const invoiceId = ethers.keccak256(
+        ethers.toUtf8Bytes(payment.id + Date.now().toString())
+      );
+
+      const { lenderAddress } = await factorInvoice(robinhoodSigner, {
+        invoiceId,
+        totalInvoiceAmount: totalAmount,
+        upfrontPaid,
+        factoredAmount: remainingAmount,
+        discountRate: selectedRate,
       });
 
-      const data = await response.json();
+      // --- Step 2: redirectPayment to lender on Arbitrum Sepolia ---
+      setStep("redirecting");
+      const arbitrumSigner = await getSignerOnChain(wallet, ARBITRUM_SEPOLIA_CHAIN_ID);
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to factor invoice");
-      }
+      await redirectPaymentToLender(arbitrumSigner, {
+        paymentId: payment.id,
+        lenderAddress,
+      });
 
+      setStep("done");
       onSuccess();
-      onClose();
     } catch (err: any) {
       setError(err.message || "Failed to factor invoice");
-    } finally {
-      setLoading(false);
+      setStep("error");
     }
   };
 
@@ -171,23 +205,23 @@ export default function FactorInvoiceModal({
           </Box>
         </Box>
 
-        {error && (
+        {step !== "idle" && (
           <Typography
             sx={{
               fontSize: "14px",
-              color: "#d32f2f",
+              color: step === "error" ? "#d32f2f" : step === "done" ? "#2e7d32" : "#555",
               mb: 2,
               fontFamily: "inherit",
             }}
           >
-            {error}
+            {stepLabel()}
           </Typography>
         )}
 
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button
             onClick={onClose}
-            disabled={loading}
+            disabled={step === "factoring" || step === "redirecting"}
             variant="outlined"
             fullWidth
             sx={{
@@ -205,11 +239,11 @@ export default function FactorInvoiceModal({
               },
             }}
           >
-            Cancel
+            {step === "done" ? "Close" : "Cancel"}
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={step === "factoring" || step === "redirecting" || step === "done"}
             fullWidth
             sx={{
               backgroundColor: "#171717",
@@ -224,7 +258,7 @@ export default function FactorInvoiceModal({
               "&:disabled": { backgroundColor: "#999" },
             }}
           >
-            {loading ? "Submitting..." : "Factor Invoice"}
+            {step === "factoring" ? "Factoring…" : step === "redirecting" ? "Redirecting…" : "Factor Invoice"}
           </Button>
         </Box>
       </DialogContent>
