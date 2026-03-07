@@ -23,7 +23,8 @@ export default function LenderPaymentsPage() {
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [selectedDiscountRate, setSelectedDiscountRate] = useState<number>(5);
-  const [selectedPosition, setSelectedPosition] = useState<LenderPosition | null>(null);
+  const [selectedPosition, setSelectedPosition] =
+    useState<LenderPosition | null>(null);
   const { wallets } = useWallets();
 
   const lenderAddress = wallets.find(
@@ -32,7 +33,9 @@ export default function LenderPaymentsPage() {
 
   const fetchPositions = useCallback(async () => {
     if (!lenderAddress) return;
-    const res = await fetch(`/api/lender-positions?lender_address=${lenderAddress}`);
+    const res = await fetch(
+      `/api/lender-positions?lender_address=${lenderAddress}`
+    );
     const json = await res.json();
     if (json.success) {
       setPositions(json.data);
@@ -123,8 +126,11 @@ export default function LenderPaymentsPage() {
       });
 
       // Update database
-      const newAvailable = (parseFloat(selectedPosition.amount_available) - amount).toString();
-      const newStatus = parseFloat(newAvailable) === 0 ? "withdrawn" : selectedPosition.status;
+      const newAvailable = (
+        parseFloat(selectedPosition.amount_available) - amount
+      ).toString();
+      const newStatus =
+        parseFloat(newAvailable) === 0 ? "withdrawn" : selectedPosition.status;
 
       await fetch(`/api/lender-positions/${selectedPosition.id}`, {
         method: "PATCH",
@@ -156,7 +162,12 @@ export default function LenderPaymentsPage() {
         <RoleSwitcher />
 
         {/* Balance Card */}
-        {lenderAddress && <BalanceCard walletAddress={lenderAddress} showContractBalance={true} />}
+        {lenderAddress && (
+          <BalanceCard
+            walletAddress={lenderAddress}
+            showContractBalance={true}
+          />
+        )}
 
         <Typography
           component="h1"
@@ -248,10 +259,22 @@ export default function LenderPaymentsPage() {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "18px", fontWeight: 700, fontFamily: "inherit" }}>
+                <Typography
+                  sx={{
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                  }}
+                >
                   5% Lower Risk
                 </Typography>
-                <Typography sx={{ fontSize: "13px", color: "#777777", fontFamily: "inherit" }}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    color: "#777777",
+                    fontFamily: "inherit",
+                  }}
+                >
                   Conservative returns, lower default risk
                 </Typography>
               </Box>
@@ -275,10 +298,22 @@ export default function LenderPaymentsPage() {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "18px", fontWeight: 700, fontFamily: "inherit" }}>
+                <Typography
+                  sx={{
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                  }}
+                >
                   10% Higher Risk
                 </Typography>
-                <Typography sx={{ fontSize: "13px", color: "#CCCCCC", fontFamily: "inherit" }}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    color: "#CCCCCC",
+                    fontFamily: "inherit",
+                  }}
+                >
                   Higher returns, increased default risk
                 </Typography>
               </Box>
@@ -310,7 +345,8 @@ export default function LenderPaymentsPage() {
             positions.map((position) => {
               const amountLent = parseFloat(position.amount_lent);
               const totalAmount = parseFloat(position.amount);
-              const expectedReturn = (totalAmount * position.discount_rate) / 100;
+              const expectedReturn =
+                (totalAmount * position.discount_rate) / 100;
 
               return (
                 <PaymentCard
@@ -318,14 +354,21 @@ export default function LenderPaymentsPage() {
                   variant="lender"
                   company={`${position.discount_rate}% Discount Rate`}
                   terms={`Offer ID: ${position.offer_id}`}
-                  amount={`$${parseFloat(position.amount).toLocaleString()} USAT`}
+                  amount={`$${parseFloat(
+                    position.amount
+                  ).toLocaleString()} USAT`}
                   badges={[position.status]}
                   depositedAmount={`$${totalAmount.toLocaleString()} deposited`}
-                  availableAmount={`$${parseFloat(position.amount_available).toLocaleString()} available`}
+                  availableAmount={`$${parseFloat(
+                    position.amount_available
+                  ).toLocaleString()} available`}
                   lentAmount={`$${amountLent.toLocaleString()} lent out`}
-                  expectedReturn={`~$${expectedReturn.toFixed(2)} expected return`}
+                  expectedReturn={`~$${expectedReturn.toFixed(
+                    2
+                  )} expected return`}
                   onWithdraw={
-                    parseFloat(position.amount_available) > 0 && position.status === "active"
+                    parseFloat(position.amount_available) > 0 &&
+                    position.status === "active"
                       ? () => handleWithdraw(position)
                       : undefined
                   }

@@ -74,7 +74,13 @@ export default function SellerPaymentsPage() {
         <RoleSwitcher />
 
         {/* Balance Card */}
-        {sellerAddress && <BalanceCard walletAddress={sellerAddress} showEscrowBalance={true} userRole="seller" />}
+        {sellerAddress && (
+          <BalanceCard
+            walletAddress={sellerAddress}
+            showEscrowBalance={true}
+            userRole="seller"
+          />
+        )}
 
         <Typography
           component="h1"
@@ -169,6 +175,7 @@ export default function SellerPaymentsPage() {
               return (
                 <PaymentCard
                   key={payment.id}
+                  paymentId={payment.id}
                   variant="seller"
                   company={`From: ${payment.buyer_address}`}
                   terms={`${payment.upfront_percentage}% paid upfront, ${payment.remaining_percentage}% on delivery verification`}

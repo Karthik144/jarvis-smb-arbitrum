@@ -82,7 +82,13 @@ export default function BuyerPaymentsPage() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <RoleSwitcher />
 
-          {buyerAddress && <BalanceCard walletAddress={buyerAddress} showEscrowBalance={true} userRole="buyer" />}
+          {buyerAddress && (
+            <BalanceCard
+              walletAddress={buyerAddress}
+              showEscrowBalance={true}
+              userRole="buyer"
+            />
+          )}
 
           <Box
             sx={{
@@ -173,6 +179,7 @@ export default function BuyerPaymentsPage() {
                 return (
                   <PaymentCard
                     key={payment.id}
+                    paymentId={payment.id}
                     variant="buyer"
                     company={contactName ?? payment.seller_address}
                     sellerAddress={payment.seller_address}

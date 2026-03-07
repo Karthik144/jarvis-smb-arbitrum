@@ -11,6 +11,7 @@ interface PaymentCardProps {
   variant: "buyer" | "seller" | "lender";
   company: string;
   sellerAddress?: string;
+  paymentId?: string; // <-- Added paymentId prop
   terms: string;
   amount: string;
   badges: string[];
@@ -32,6 +33,7 @@ export default function PaymentCard({
   variant,
   company,
   sellerAddress,
+  paymentId,
   terms,
   amount,
   badges,
@@ -45,14 +47,23 @@ export default function PaymentCard({
   expectedReturn,
   onWithdraw,
 }: PaymentCardProps) {
-  const [copied, setCopied] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
+  const [paymentIdCopied, setPaymentIdCopied] = useState(false);
 
-  function handleCopy() {
+  function handleCopyAddress() {
     if (!sellerAddress) return;
     navigator.clipboard.writeText(sellerAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setAddressCopied(true);
+    setTimeout(() => setAddressCopied(false), 1500);
   }
+
+  function handleCopyPaymentId() {
+    if (!paymentId) return;
+    navigator.clipboard.writeText(paymentId);
+    setPaymentIdCopied(true);
+    setTimeout(() => setPaymentIdCopied(false), 1500);
+  }
+
   return (
     <Box
       sx={{
@@ -79,24 +90,46 @@ export default function PaymentCard({
         >
           {company}
         </Typography>
+
         {sellerAddress && (
           <Typography
-            onClick={handleCopy}
+            onClick={handleCopyAddress}
             sx={{
               fontSize: "12px",
-              color: copied ? "#22a06b" : "#AAAAAA",
+              color: addressCopied ? "#22a06b" : "#AAAAAA",
               fontFamily: "monospace",
               cursor: "pointer",
               userSelect: "none",
               transition: "color 0.15s",
-              "&:hover": { color: copied ? "#22a06b" : "#555555" },
+              "&:hover": { color: addressCopied ? "#22a06b" : "#555555" },
             }}
           >
-            {copied
+            {addressCopied
               ? "Copied!"
               : `${sellerAddress.slice(0, 6)}…${sellerAddress.slice(-4)}`}
           </Typography>
         )}
+
+        {/* New Payment ID Field */}
+        {paymentId && (
+          <Typography
+            onClick={handleCopyPaymentId}
+            sx={{
+              fontSize: "12px",
+              color: paymentIdCopied ? "#22a06b" : "#AAAAAA",
+              fontFamily: "monospace",
+              cursor: "pointer",
+              userSelect: "none",
+              transition: "color 0.15s",
+              "&:hover": { color: paymentIdCopied ? "#22a06b" : "#555555" },
+            }}
+          >
+            {paymentIdCopied
+              ? "Copied!"
+              : `ID: ${paymentId.slice(0, 3)}…${paymentId.slice(-3)}`}
+          </Typography>
+        )}
+
         <Typography
           sx={{ fontSize: "14px", color: "#777777", fontFamily: "inherit" }}
         >
