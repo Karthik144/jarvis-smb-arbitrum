@@ -79,7 +79,7 @@ export default function BuyerPaymentsPage() {
         }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {buyerAddress && <BalanceCard walletAddress={buyerAddress} />}
+          {buyerAddress && <BalanceCard walletAddress={buyerAddress} showEscrowBalance={true} userRole="buyer" />}
 
           <Box
             sx={{

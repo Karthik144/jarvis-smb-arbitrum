@@ -71,7 +71,7 @@ export default function SellerPaymentsPage() {
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {/* Balance Card */}
-        {sellerAddress && <BalanceCard walletAddress={sellerAddress} />}
+        {sellerAddress && <BalanceCard walletAddress={sellerAddress} showEscrowBalance={true} userRole="seller" />}
 
         <Typography
           component="h1"

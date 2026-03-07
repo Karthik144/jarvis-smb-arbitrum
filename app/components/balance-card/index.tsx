@@ -21,6 +21,7 @@ const USAT_ADDRESS =
   "0x026671bE3F475c9003fc0eBc3d77e9FA44dA5f55";
 
 const INVOICE_FACTORING_ADDRESS = "0x207CaC4B8B14Ef28a962B419959AA23fF94c2191";
+const FEDEX_ESCROW_ADDRESS = process.env.NEXT_PUBLIC_PAYMENT_CONTRACT_ADDRESS || "";
 
 const TOKEN_DECIMALS = 6;
 
@@ -31,14 +32,26 @@ const INVOICE_FACTORING_ABI = [
   "function getOffer(uint256 offerId) view returns (tuple(address lender, uint256 totalAmount, uint256 availableAmount, uint8 discountRate, bool active))",
 ];
 
+const FEDEX_ESCROW_ABI = [
+  "function getEscrow(bytes32 paymentId) view returns (tuple(address buyer, address seller, uint256 totalAmount, uint256 remainingAmount, uint8 upfrontPct, uint8 status))",
+];
+
 interface BalanceCardProps {
   walletAddress: string;
   showContractBalance?: boolean;
+  showEscrowBalance?: boolean;
+  userRole?: "buyer" | "seller";
 }
 
-export default function BalanceCard({ walletAddress, showContractBalance = false }: BalanceCardProps) {
+export default function BalanceCard({
+  walletAddress,
+  showContractBalance = false,
+  showEscrowBalance = false,
+  userRole
+}: BalanceCardProps) {
   const [balance, setBalance] = useState<string | null>(null);
   const [contractBalance, setContractBalance] = useState<{ totalDeposited: number; currentlyAvailable: number } | null>(null);
+  const [escrowBalance, setEscrowBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -96,19 +109,66 @@ export default function BalanceCard({ walletAddress, showContractBalance = false
 
           setContractBalance({ totalDeposited, currentlyAvailable });
         }
+
+        // Fetch escrow balance if requested
+        if (showEscrowBalance && userRole) {
+          try {
+            // Fetch all payments for this user
+            const paymentsRes = await fetch("/api/payments");
+            const paymentsJson = await paymentsRes.json();
+
+            if (paymentsJson.success) {
+              const escrowContract = new ethers.Contract(
+                FEDEX_ESCROW_ADDRESS,
+                FEDEX_ESCROW_ABI,
+                arbProvider
+              );
+
+              let totalEscrow = 0;
+              const payments = paymentsJson.data;
+
+              for (const payment of payments) {
+                // Filter payments based on user role
+                const isRelevant = userRole === "buyer"
+                  ? payment.buyer_address.toLowerCase() === walletAddress.toLowerCase()
+                  : payment.seller_address.toLowerCase() === walletAddress.toLowerCase();
+
+                if (!isRelevant || payment.status === "completed") continue;
+
+                try {
+                  // Convert UUID to bytes32
+                  const paymentId = ethers.keccak256(ethers.toUtf8Bytes(payment.id));
+                  const escrow = await escrowContract.getEscrow(paymentId);
+
+                  // Sum up remainingAmount (still locked in escrow)
+                  const remainingAmount = Number(escrow.remainingAmount) / Math.pow(10, TOKEN_DECIMALS);
+                  totalEscrow += remainingAmount;
+                } catch (err) {
+                  console.warn(`Could not fetch escrow for payment ${payment.id}:`, err);
+                }
+              }
+
+              setEscrowBalance(totalEscrow);
+            }
+          } catch (error) {
+            console.error("Failed to fetch escrow balance:", error);
+            setEscrowBalance(null);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch balance:", error);
         setBalance(null);
         setContractBalance(null);
+        setEscrowBalance(null);
       } finally {
         setLoading(false);
       }
     }
 
     fetchBalance();
-  }, [walletAddress, showContractBalance]);
+  }, [walletAddress, showContractBalance, showEscrowBalance, userRole]);
 
-  if (!showContractBalance) {
+  if (!showContractBalance && !showEscrowBalance) {
     return (
       <Typography
         sx={{
@@ -152,66 +212,128 @@ export default function BalanceCard({ walletAddress, showContractBalance = false
       </Box>
 
       {contractBalance && (
-        <Box
-          sx={{
-            backgroundColor: "#F5F5F5",
-            borderRadius: "10px",
-            p: 2,
-            display: "flex",
-            gap: 3,
-          }}
-        >
-          <Box>
-            <Typography
-              sx={{
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "#777777",
-                fontFamily: "inherit",
-                mb: 0.5,
-              }}
-            >
-              Total Deposited
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 600,
-                color: "#000000",
-                fontFamily: "inherit",
-              }}
-            >
-              ${contractBalance.totalDeposited.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Typography>
-          </Box>
+        <Box>
+          <Typography
+            sx={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#777777",
+              fontFamily: "inherit",
+              mb: 1,
+            }}
+          >
+            Lending Contract Balance
+          </Typography>
+          <Box
+            sx={{
+              backgroundColor: "#F5F5F5",
+              borderRadius: "10px",
+              p: 2,
+              display: "flex",
+              gap: 3,
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  color: "#777777",
+                  fontFamily: "inherit",
+                  mb: 0.5,
+                }}
+              >
+                Total Deposited
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: "#000000",
+                  fontFamily: "inherit",
+                }}
+              >
+                ${contractBalance.totalDeposited.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+            </Box>
 
-          <Box>
-            <Typography
-              sx={{
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "#777777",
-                fontFamily: "inherit",
-                mb: 0.5,
-              }}
-            >
-              Currently Available
-            </Typography>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  color: "#777777",
+                  fontFamily: "inherit",
+                  mb: 0.5,
+                }}
+              >
+                Currently Available
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: "#2e7d32",
+                  fontFamily: "inherit",
+                }}
+              >
+                ${contractBalance.currentlyAvailable.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {showEscrowBalance && escrowBalance !== null && (
+        <Box>
+          <Typography
+            sx={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#777777",
+              fontFamily: "inherit",
+              mb: 1,
+            }}
+          >
+            {userRole === "buyer" ? "Escrow Balance (Locked)" : "Escrow Balance (Claimable)"}
+          </Typography>
+          <Box
+            sx={{
+              backgroundColor: "#F5F5F5",
+              borderRadius: "10px",
+              p: 2,
+            }}
+          >
             <Typography
               sx={{
                 fontSize: "20px",
                 fontWeight: 600,
-                color: "#2e7d32",
+                color: userRole === "buyer" ? "#ff6b35" : "#2e7d32",
                 fontFamily: "inherit",
               }}
             >
-              ${contractBalance.currentlyAvailable.toLocaleString("en-US", {
+              ${escrowBalance.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                color: "#777777",
+                fontFamily: "inherit",
+                mt: 0.5,
+              }}
+            >
+              {userRole === "buyer"
+                ? "Funds held in escrow for pending payments"
+                : "Funds awaiting delivery verification"}
             </Typography>
           </Box>
         </Box>
