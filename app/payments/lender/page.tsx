@@ -14,6 +14,7 @@ import { useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { createLendingOffer, withdrawFromLendingOffer } from "@/lib/contract";
 import { LenderPosition } from "@/lib/database.types";
+import { useClaimPayment } from "../useClaimPayment";
 
 export default function LenderPaymentsPage() {
   const [positions, setPositions] = useState<LenderPosition[]>([]);
@@ -26,6 +27,7 @@ export default function LenderPaymentsPage() {
   const [selectedPosition, setSelectedPosition] =
     useState<LenderPosition | null>(null);
   const { wallets } = useWallets();
+  const { claimPayment, state, txHash, error, reset } = useClaimPayment();
 
   const lenderAddress = wallets.find(
     (w) => w.walletClientType === "privy"
@@ -372,6 +374,7 @@ export default function LenderPaymentsPage() {
                       ? () => handleWithdraw(position)
                       : undefined
                   }
+                  onClaim={() => claimPayment()}
                 />
               );
             })

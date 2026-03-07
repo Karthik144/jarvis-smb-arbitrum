@@ -11,17 +11,14 @@ interface PaymentCardProps {
   variant: "buyer" | "seller" | "lender";
   company: string;
   sellerAddress?: string;
-  paymentId?: string; // <-- Added paymentId prop
+  paymentId?: string;
   terms: string;
   amount: string;
   badges: string[];
-  // buyer only
   paid?: string;
-  // seller only
   remaining?: string;
   onClaim?: () => void;
   onFactorInvoice?: () => void;
-  // lender only
   depositedAmount?: string;
   availableAmount?: string;
   lentAmount?: string;

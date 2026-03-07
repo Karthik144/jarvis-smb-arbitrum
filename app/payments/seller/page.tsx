@@ -9,7 +9,7 @@ import BalanceCard from "@/app/components/balance-card";
 import RoleSwitcher from "@/app/components/role-switcher";
 import { useWallets } from "@privy-io/react-auth";
 import { Payment } from "@/lib/types";
-import { useClaimPayment } from "./useClaimPayment";
+import { useClaimPayment } from "../useClaimPayment";
 
 export default function SellerPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
