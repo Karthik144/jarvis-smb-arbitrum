@@ -13,6 +13,11 @@ contract Deploy is Script {
     address constant USDC_ARBITRUM_ONE = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
     address constant RECLAIM_ARBITRUM_ONE = address(0); // update when confirmed
 
+    // Robinhood Testnet (chain 46630)
+    // MockUSAT deployed at 0x026671bE3F475c9003fc0eBc3d77e9FA44dA5f55
+    address constant USAT_ROBINHOOD_TESTNET = 0x026671bE3F475c9003fc0eBc3d77e9FA44dA5f55;
+    address constant RECLAIM_ROBINHOOD_TESTNET = address(0); // Reclaim not deployed on Robinhood testnet — proof verification skipped
+
     function run() external {
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
@@ -35,6 +40,12 @@ contract Deploy is Script {
             usdcAddr = USDC_ARBITRUM_ONE;
             reclaimAddr = RECLAIM_ARBITRUM_ONE;
             console.log("Network: Arbitrum One");
+        } else if (block.chainid == 46630) {
+            // Robinhood Testnet
+            usdcAddr = USAT_ROBINHOOD_TESTNET;
+            reclaimAddr = RECLAIM_ROBINHOOD_TESTNET;
+            console.log("Network: Robinhood Testnet");
+            console.log("WARNING: Reclaim verification disabled (address(0))");
         } else {
             revert("Unsupported network");
         }
@@ -46,7 +57,7 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         console.log("FedExEscrow deployed at:", address(escrow));
-        console.log("USDC address:", usdcAddr);
+        console.log("USDC/USAT address:", usdcAddr);
         console.log("Reclaim address:", reclaimAddr);
     }
 }
