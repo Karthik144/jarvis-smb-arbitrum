@@ -61,7 +61,8 @@ export default function Navbar() {
   const isPaymentsRoute = pathname?.startsWith("/payments");
   const isHomeRoute = pathname === "/";
 
-  const handleAuthAction = async () => {
+  const handleAuthAction = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    (e.currentTarget as HTMLButtonElement).blur();
     if (isPaymentsRoute && authenticated) {
       logout();
     } else if (authenticated) {
@@ -114,7 +115,7 @@ export default function Navbar() {
           )}
 
           <Button
-            onClick={handleAuthAction}
+            onClick={(e) => handleAuthAction(e)}
             variant="outlined"
             sx={commonButtonStyles}
           >
