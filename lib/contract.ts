@@ -208,7 +208,7 @@ export const INVOICE_FACTORING_ABI = [
     type: 'function',
     stateMutability: 'nonpayable',
     inputs: [
-      { name: 'discountRate', type: 'uint256' },
+      { name: 'discountRate', type: 'uint8' },
       { name: 'amount', type: 'uint256' },
     ],
     outputs: [{ name: 'offerId', type: 'uint256' }],
