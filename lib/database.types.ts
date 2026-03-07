@@ -26,6 +26,23 @@ export interface LenderPosition {
   updated_at: string;
 }
 
+export interface FactoredInvoice {
+  id: string;
+  created_at: string;
+  payment_id: string;
+  seller_address: string;
+  lender_offer_id: string;
+  invoice_id: string; // bytes32 hash
+  total_invoice_amount: string;
+  upfront_paid: string;
+  factored_amount: string;
+  payout_to_seller: string;
+  discount_rate: number; // 5 or 10
+  status: 'pending' | 'matched' | 'settled' | 'failed';
+  tx_hash: string | null;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -63,6 +80,25 @@ export interface Database {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      factored_invoices: {
+        Row: FactoredInvoice;
+        Insert: Omit<FactoredInvoice, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<FactoredInvoice, 'id' | 'created_at'>> & {
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'factored_invoices_payment_id_fkey';
+            columns: ['payment_id'];
+            referencedRelation: 'payments';
+            referencedColumns: ['id'];
+          }
+        ];
       };
     };
     Views: Record<string, never>;

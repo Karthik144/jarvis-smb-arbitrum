@@ -255,6 +255,19 @@ export const INVOICE_FACTORING_ABI = [
     inputs: [{ name: 'lender', type: 'address' }],
     outputs: [{ type: 'uint256[]' }],
   },
+  {
+    name: 'factorInvoice',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'invoiceId', type: 'bytes32' },
+      { name: 'totalInvoiceAmount', type: 'uint256' },
+      { name: 'upfrontPaid', type: 'uint256' },
+      { name: 'factoredAmount', type: 'uint256' },
+      { name: 'discountRate', type: 'uint8' },
+    ],
+    outputs: [],
+  },
 ] as const;
 
 /**

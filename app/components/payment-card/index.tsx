@@ -19,6 +19,7 @@ interface PaymentCardProps {
   // seller only
   remaining?: string;
   onClaim?: () => void;
+  onFactorInvoice?: () => void;
   // lender only
   depositedAmount?: string;
   availableAmount?: string;
@@ -37,6 +38,7 @@ export default function PaymentCard({
   paid,
   remaining,
   onClaim,
+  onFactorInvoice,
   depositedAmount,
   availableAmount,
   lentAmount,
@@ -149,23 +151,50 @@ export default function PaymentCard({
                 {remaining}
               </Typography>
             )}
-            <Button
-              onClick={onClaim}
-              sx={{
-                backgroundColor: "#171717",
-                color: "#FFFFFF",
-                borderRadius: "8px",
-                px: 2.5,
-                py: 1,
-                textTransform: "none",
-                fontSize: "14px",
-                fontWeight: 500,
-                fontFamily: "inherit",
-                "&:hover": { backgroundColor: "#2a2a2a" },
-              }}
-            >
-              Claim
-            </Button>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              {onClaim && (
+                <Button
+                  onClick={onClaim}
+                  sx={{
+                    backgroundColor: "#171717",
+                    color: "#FFFFFF",
+                    borderRadius: "8px",
+                    px: 2.5,
+                    py: 1,
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    "&:hover": { backgroundColor: "#2a2a2a" },
+                  }}
+                >
+                  Claim
+                </Button>
+              )}
+              {onFactorInvoice && (
+                <Button
+                  onClick={onFactorInvoice}
+                  variant="outlined"
+                  sx={{
+                    borderColor: "#E0E0E0",
+                    color: "#000000",
+                    borderRadius: "8px",
+                    px: 2.5,
+                    py: 1,
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    "&:hover": {
+                      backgroundColor: "#F5F5F5",
+                      borderColor: "#CCCCCC",
+                    },
+                  }}
+                >
+                  Factor Invoice
+                </Button>
+              )}
+            </Box>
           </>
         )}
 
