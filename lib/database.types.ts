@@ -9,8 +9,21 @@ export interface User {
   company_name: string;
   email: string;
   wallet_address: string;
-  type: 'buyer' | 'seller';
+  type: 'buyer' | 'seller' | 'lender';
   privy_user_id: string;
+}
+
+export interface LenderPosition {
+  id: string;
+  created_at: string;
+  offer_id: string;
+  lender_address: string;
+  amount: string;
+  discount_rate: number; // 5 or 10
+  amount_available: string;
+  amount_lent: string;
+  status: 'active' | 'withdrawn' | 'fully_deployed';
+  updated_at: string;
 }
 
 export interface Database {
@@ -36,6 +49,18 @@ export interface Database {
         };
         Update: Partial<Omit<User, 'id' | 'created_at'>> & {
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      lender_positions: {
+        Row: LenderPosition;
+        Insert: Omit<LenderPosition, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<LenderPosition, 'id' | 'created_at'>> & {
+          updated_at?: string;
         };
         Relationships: [];
       };

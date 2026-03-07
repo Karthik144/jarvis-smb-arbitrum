@@ -33,7 +33,7 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
   const [formData, setFormData] = useState({
     companyName: '',
     email: '',
-    type: 'buyer' as 'buyer' | 'seller',
+    type: 'buyer' as 'buyer' | 'seller' | 'lender',
   });
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -96,7 +96,12 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
           privy_user_id: user.id,
         });
 
-        const redirectPath = formData.type === 'buyer' ? '/payments/buyer' : '/payments/seller';
+        const redirectPath =
+          formData.type === 'buyer'
+            ? '/payments/buyer'
+            : formData.type === 'seller'
+            ? '/payments/seller'
+            : '/payments/lender';
         router.push(redirectPath);
       } catch (err: unknown) {
         accountCreationStarted.current = false;
@@ -319,6 +324,27 @@ export default function GetStartedModal({ open, onClose }: GetStartedModalProps)
                   }}
                 >
                   Seller
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={() => setFormData({ ...formData, type: 'lender' })}
+                  sx={{
+                    borderRadius: "10px",
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    backgroundColor: formData.type === "lender" ? "#171717" : "#FFFFFF",
+                    color: formData.type === "lender" ? "#FFFFFF" : "#000000",
+                    border: formData.type === "lender" ? "none" : "1px solid #E0E0E0",
+                    boxShadow: formData.type === "lender" ? "0 1px 3px rgba(0,0,0,0.12)" : "0 1px 2px rgba(0,0,0,0.06)",
+                    "&:hover": {
+                      backgroundColor: formData.type === "lender" ? "#2a2a2a" : "#F5F5F5",
+                    },
+                  }}
+                >
+                  Lender
                 </Button>
               </Box>
             </Box>

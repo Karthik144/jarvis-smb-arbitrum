@@ -8,7 +8,7 @@ import Button from "@mui/material/Button";
 import Badge from "@/app/components/badge";
 
 interface PaymentCardProps {
-  variant: "buyer" | "seller";
+  variant: "buyer" | "seller" | "lender";
   company: string;
   sellerAddress?: string;
   terms: string;
@@ -19,6 +19,12 @@ interface PaymentCardProps {
   // seller only
   remaining?: string;
   onClaim?: () => void;
+  // lender only
+  depositedAmount?: string;
+  availableAmount?: string;
+  lentAmount?: string;
+  expectedReturn?: string;
+  onWithdraw?: () => void;
 }
 
 export default function PaymentCard({
@@ -31,6 +37,11 @@ export default function PaymentCard({
   paid,
   remaining,
   onClaim,
+  depositedAmount,
+  availableAmount,
+  lentAmount,
+  expectedReturn,
+  onWithdraw,
 }: PaymentCardProps) {
   const [copied, setCopied] = useState(false);
 
@@ -102,7 +113,7 @@ export default function PaymentCard({
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-end",
-          gap: variant === "seller" ? 1.5 : 0.5,
+          gap: variant === "seller" || variant === "lender" ? 1.5 : 0.5,
         }}
       >
         <Typography
@@ -155,6 +166,75 @@ export default function PaymentCard({
             >
               Claim
             </Button>
+          </>
+        )}
+
+        {variant === "lender" && (
+          <>
+            {depositedAmount && (
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  color: "#999999",
+                  fontFamily: "inherit",
+                }}
+              >
+                {depositedAmount}
+              </Typography>
+            )}
+            {availableAmount && (
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  color: "#22a06b",
+                  fontFamily: "inherit",
+                }}
+              >
+                {availableAmount}
+              </Typography>
+            )}
+            {lentAmount && (
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  color: "#777777",
+                  fontFamily: "inherit",
+                }}
+              >
+                {lentAmount}
+              </Typography>
+            )}
+            {expectedReturn && (
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  color: "#2e7d32",
+                  fontFamily: "inherit",
+                  fontWeight: 600,
+                }}
+              >
+                {expectedReturn}
+              </Typography>
+            )}
+            {onWithdraw && (
+              <Button
+                onClick={onWithdraw}
+                sx={{
+                  backgroundColor: "#171717",
+                  color: "#FFFFFF",
+                  borderRadius: "8px",
+                  px: 2.5,
+                  py: 1,
+                  textTransform: "none",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  "&:hover": { backgroundColor: "#2a2a2a" },
+                }}
+              >
+                Withdraw
+              </Button>
+            )}
           </>
         )}
       </Box>
