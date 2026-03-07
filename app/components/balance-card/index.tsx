@@ -4,22 +4,23 @@ import { useState, useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import { ethers } from "ethers";
 
-// USDC contract addresses
-const USDC_ADDRESS_MAINNET = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
-const USDC_ADDRESS_SEPOLIA = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d";
-const USDC_DECIMALS = 6;
-
-// Use environment variable or fallback to public RPC
-const RPC_URL =
-  process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL ||
+const ARBITRUM_SEPOLIA_RPC =
+  process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL ||
   "https://sepolia-rollup.arbitrum.io/rpc";
 
-// Detect which USDC address to use based on RPC URL
-const USDC_ADDRESS = RPC_URL.includes("sepolia")
-  ? USDC_ADDRESS_SEPOLIA
-  : USDC_ADDRESS_MAINNET;
+const ROBINHOOD_TESTNET_RPC =
+  process.env.NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL || "";
 
-// Minimal ERC-20 ABI for balanceOf
+const USDC_ADDRESS =
+  process.env.NEXT_PUBLIC_USDC_ADDRESS ||
+  "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d";
+
+const USAT_ADDRESS =
+  process.env.NEXT_PUBLIC_USAT_ADDRESS ||
+  "0x026671bE3F475c9003fc0eBc3d77e9FA44dA5f55";
+
+const TOKEN_DECIMALS = 6;
+
 const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)"];
 
 interface BalanceCardProps {
@@ -40,26 +41,29 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
       try {
         setLoading(true);
 
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        const arbProvider = new ethers.JsonRpcProvider(ARBITRUM_SEPOLIA_RPC);
+        const rhoProvider = new ethers.JsonRpcProvider(ROBINHOOD_TESTNET_RPC);
 
-        const usdcContract = new ethers.Contract(
-          USDC_ADDRESS,
-          ERC20_ABI,
-          provider
-        );
+        const usdcContract = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, arbProvider);
+        const usatContract = new ethers.Contract(USAT_ADDRESS, ERC20_ABI, rhoProvider);
 
-        const rawBalance = await usdcContract.balanceOf(walletAddress);
+        const [rawUsdc, rawUsat] = await Promise.all([
+          usdcContract.balanceOf(walletAddress),
+          usatContract.balanceOf(walletAddress),
+        ]);
 
-        const balanceInUsdc = Number(rawBalance) / Math.pow(10, USDC_DECIMALS);
+        const usdcBalance = Number(rawUsdc) / Math.pow(10, TOKEN_DECIMALS);
+        const usatBalance = Number(rawUsat) / Math.pow(10, TOKEN_DECIMALS);
+        const total = usdcBalance + usatBalance;
 
-        const formattedBalance = `$${balanceInUsdc.toLocaleString("en-US", {
+        const formattedBalance = `$${total.toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })} USDC`;
+        })}`;
 
         setBalance(formattedBalance);
       } catch (error) {
-        console.error("Failed to fetch USDC balance:", error);
+        console.error("Failed to fetch balance:", error);
         setBalance(null);
       } finally {
         setLoading(false);
