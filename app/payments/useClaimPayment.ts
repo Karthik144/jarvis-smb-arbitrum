@@ -27,6 +27,14 @@ export function useClaimPayment() {
         const wallet = wallets.find((w) => w.walletClientType === "privy");
         if (!wallet) throw new Error("No wallet connected. Please log in again.");
 
+        // Ensure we're on Arbitrum Sepolia for the FedExEscrow contract
+        await wallet.switchChain(421614);
+        const switchCheckProvider = new ethers.BrowserProvider(await wallet.getEthereumProvider());
+        const switchedNetwork = await switchCheckProvider.getNetwork();
+        if (Number(switchedNetwork.chainId) !== 421614) {
+          throw new Error(`Chain switch failed. Expected Arbitrum Sepolia (421614), got ${switchedNetwork.chainId}. Please switch manually and try again.`);
+        }
+
         const jsonRequest = await getReclaimConfig();
         const reclaimReq = await ReclaimProofRequest.fromJsonString(jsonRequest);
         await reclaimReq.triggerReclaimFlow();

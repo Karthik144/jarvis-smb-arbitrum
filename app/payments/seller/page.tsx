@@ -7,12 +7,14 @@ import Typography from "@mui/material/Typography";
 import PaymentCard from "@/app/components/payment-card";
 import BalanceCard from "@/app/components/balance-card";
 import RoleSwitcher from "@/app/components/role-switcher";
+import FactorInvoiceModal from "@/app/components/factor-invoice-modal";
 import { useWallets } from "@privy-io/react-auth";
 import { Payment } from "@/lib/types";
 import { useClaimPayment } from "../useClaimPayment";
 
 export default function SellerPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [factoringPayment, setFactoringPayment] = useState<Payment | null>(null);
   const { wallets } = useWallets();
   const { claimPayment, state, txHash, error, reset } = useClaimPayment();
 
@@ -210,6 +212,9 @@ export default function SellerPaymentsPage() {
                       ? undefined
                       : () => claimPayment(payment)
                   }
+                  onFactorInvoice={
+                    isCompleted ? undefined : () => setFactoringPayment(payment)
+                  }
                 />
               );
             })
@@ -229,6 +234,15 @@ export default function SellerPaymentsPage() {
           </Typography>
         ) : null}
       </Box>
+
+      {factoringPayment && (
+        <FactorInvoiceModal
+          open={!!factoringPayment}
+          onClose={() => setFactoringPayment(null)}
+          payment={factoringPayment}
+          onSuccess={fetchPayments}
+        />
+      )}
     </Box>
   );
 }

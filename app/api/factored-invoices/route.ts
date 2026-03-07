@@ -41,55 +41,64 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Find a matching lender position with the same discount rate and enough available funds
-    const { data: positions, error: posError } = await supabase
-      .from('lender_positions')
-      .select('*')
-      .eq('discount_rate', body.discount_rate)
-      .eq('status', 'active')
-      .gte('amount_available', body.factored_amount)
-      .order('created_at', { ascending: true }) // First come, first served
-      .limit(1);
-
-    if (posError) throw posError;
-
     let lenderOfferId = '0';
     let status = 'pending';
 
-    // If we found a matching lender position, update it
-    if (positions && positions.length > 0) {
-      const position = positions[0];
-      lenderOfferId = position.offer_id;
-      status = 'matched';
-
-      // Update lender position: reduce available, increase lent
-      const newAmountAvailable = (
-        parseFloat(position.amount_available) - parseFloat(body.factored_amount)
-      ).toString();
-      const newAmountLent = (
-        parseFloat(position.amount_lent) + parseFloat(body.factored_amount)
-      ).toString();
-      const newStatus =
-        parseFloat(newAmountAvailable) === 0 ? 'fully_deployed' : 'active';
-
-      const { error: updateError } = await supabase
+    // If lender_address is provided (from smart contract), find their position
+    if (body.lender_address) {
+      const { data: positions, error: posError } = await supabase
         .from('lender_positions')
-        .update({
-          amount_available: newAmountAvailable,
-          amount_lent: newAmountLent,
-          status: newStatus,
-        })
-        .eq('id', position.id);
+        .select('*')
+        .eq('lender_address', body.lender_address.toLowerCase())
+        .eq('discount_rate', body.discount_rate)
+        .eq('status', 'active')
+        .gte('amount_available', body.factored_amount)
+        .order('created_at', { ascending: true })
+        .limit(1);
 
-      if (updateError) throw updateError;
+      if (posError) throw posError;
+
+      if (positions && positions.length > 0) {
+        const position = positions[0];
+        lenderOfferId = position.offer_id;
+        status = 'matched';
+
+        // Update lender position: reduce available, increase lent
+        const newAmountAvailable = (
+          parseFloat(position.amount_available) - parseFloat(body.factored_amount)
+        ).toString();
+        const newAmountLent = (
+          parseFloat(position.amount_lent) + parseFloat(body.factored_amount)
+        ).toString();
+        const newStatus =
+          parseFloat(newAmountAvailable) === 0 ? 'fully_deployed' : 'active';
+
+        const { error: updateError } = await supabase
+          .from('lender_positions')
+          .update({
+            amount_available: newAmountAvailable,
+            amount_lent: newAmountLent,
+            status: newStatus,
+          })
+          .eq('id', position.id);
+
+        if (updateError) throw updateError;
+      }
     }
 
-    // Create the factored invoice with the matched lender or pending
+    // Create the factored invoice
     const { data, error } = await supabase
       .from('factored_invoices')
       .insert({
-        ...body,
+        payment_id: body.payment_id,
+        seller_address: body.seller_address,
         lender_offer_id: lenderOfferId,
+        invoice_id: body.invoice_id,
+        total_invoice_amount: body.total_invoice_amount,
+        upfront_paid: body.upfront_paid,
+        factored_amount: body.factored_amount,
+        payout_to_seller: body.payout_to_seller,
+        discount_rate: body.discount_rate,
         status,
       })
       .select()
