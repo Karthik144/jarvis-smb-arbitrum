@@ -11,7 +11,7 @@ const USDC_DECIMALS = 6;
 
 // Use environment variable or fallback to public RPC
 const RPC_URL =
-  process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL ||
+  process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL ||
   "https://sepolia-rollup.arbitrum.io/rpc";
 
 // Detect which USDC address to use based on RPC URL
@@ -49,7 +49,6 @@ export default function BalanceCard({ walletAddress }: BalanceCardProps) {
         );
 
         const rawBalance = await usdcContract.balanceOf(walletAddress);
-
         const balanceInUsdc = Number(rawBalance) / Math.pow(10, USDC_DECIMALS);
 
         const formattedBalance = `$${balanceInUsdc.toLocaleString("en-US", {
