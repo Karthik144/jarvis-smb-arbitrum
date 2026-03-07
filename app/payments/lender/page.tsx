@@ -13,11 +13,15 @@ import RoleSwitcher from "@/app/components/role-switcher";
 import { useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { createLendingOffer, withdrawFromLendingOffer } from "@/lib/contract";
-import { LenderPosition } from "@/lib/database.types";
+import { LenderPosition, FactoredInvoice } from "@/lib/database.types";
 import { useClaimPayment } from "../useClaimPayment";
+import { Payment } from "@/lib/types";
 
 export default function LenderPaymentsPage() {
   const [positions, setPositions] = useState<LenderPosition[]>([]);
+  const [factoredInvoices, setFactoredInvoices] = useState<
+    Array<FactoredInvoice & { payment: Payment }>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -27,7 +31,13 @@ export default function LenderPaymentsPage() {
   const [selectedPosition, setSelectedPosition] =
     useState<LenderPosition | null>(null);
   const { wallets } = useWallets();
-  const { claimPayment, state, txHash, error, reset } = useClaimPayment();
+  const {
+    claimPayment,
+    state: claimState,
+    txHash: claimTxHash,
+    error: claimError,
+    reset: resetClaim,
+  } = useClaimPayment();
 
   const lenderAddress = wallets.find(
     (w) => w.walletClientType === "privy"
@@ -44,9 +54,59 @@ export default function LenderPaymentsPage() {
     }
   }, [lenderAddress]);
 
+  const fetchFactoredInvoices = useCallback(async () => {
+    if (!lenderAddress) return;
+
+    // Get all positions for this lender
+    const posRes = await fetch(
+      `/api/lender-positions?lender_address=${lenderAddress}`
+    );
+    const posJson = await posRes.json();
+
+    if (posJson.success && posJson.data.length > 0) {
+      // Get offer IDs for this lender
+      const offerIds = posJson.data.map((p: LenderPosition) => p.offer_id);
+
+      // Fetch all payments
+      const paymentsRes = await fetch("/api/payments");
+      const paymentsJson = await paymentsRes.json();
+
+      // Fetch all factored invoices
+      const factoredRes = await fetch("/api/factored-invoices");
+      const factoredJson = await factoredRes.json();
+
+      if (factoredJson.success && paymentsJson.success) {
+        // Filter factored invoices that match lender's offers
+        const lenderInvoices = factoredJson.data
+          .filter((fi: FactoredInvoice) =>
+            offerIds.includes(fi.lender_offer_id)
+          )
+          .map((fi: FactoredInvoice) => {
+            // Find the associated payment
+            const payment = paymentsJson.data.find(
+              (p: Payment) => p.id === fi.payment_id
+            );
+            return { ...fi, payment };
+          })
+          .filter((fi: any) => fi.payment); // Only include if payment exists
+
+        setFactoredInvoices(lenderInvoices);
+      }
+    }
+  }, [lenderAddress]);
+
   useEffect(() => {
     fetchPositions();
-  }, [fetchPositions]);
+    fetchFactoredInvoices();
+  }, [fetchPositions, fetchFactoredInvoices]);
+
+  // Refresh factored invoices after a successful claim
+  useEffect(() => {
+    if (claimState === "done") {
+      fetchFactoredInvoices();
+      fetchPositions();
+    }
+  }, [claimState, fetchFactoredInvoices, fetchPositions]);
 
   const handleCreateOffer = (discountRate: number) => {
     setSelectedDiscountRate(discountRate);
@@ -184,7 +244,7 @@ export default function LenderPaymentsPage() {
           Lender Dashboard
         </Typography>
 
-        {/* Status banner */}
+        {/* Status banner for regular actions */}
         {(error || txHash) && (
           <Box
             sx={{
@@ -225,6 +285,70 @@ export default function LenderPaymentsPage() {
             >
               Dismiss
             </Typography>
+          </Box>
+        )}
+
+        {/* Claim status banner */}
+        {claimState !== "idle" && (
+          <Box
+            sx={{
+              backgroundColor:
+                claimState === "error"
+                  ? "#fff0f0"
+                  : claimState === "done"
+                  ? "#f0fff4"
+                  : "#f5f5f5",
+              border: `1px solid ${
+                claimState === "error"
+                  ? "#ffcccc"
+                  : claimState === "done"
+                  ? "#b7ebc8"
+                  : "#e0e0e0"
+              }`,
+              borderRadius: "10px",
+              px: 3,
+              py: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "14px",
+                color:
+                  claimState === "error"
+                    ? "#d32f2f"
+                    : claimState === "done"
+                    ? "#2e7d32"
+                    : "#555555",
+                fontFamily: "inherit",
+                wordBreak: "break-all",
+              }}
+            >
+              {claimState === "scanning" &&
+                "Scan the QR code with your phone to verify FedEx delivery…"}
+              {claimState === "verifying" && "Verifying proof…"}
+              {claimState === "submitting" && "Submitting to blockchain…"}
+              {claimState === "done" && `Payment claimed! Tx: ${claimTxHash}`}
+              {claimState === "error" && `Error: ${claimError}`}
+            </Typography>
+            {(claimState === "done" || claimState === "error") && (
+              <Typography
+                onClick={resetClaim}
+                sx={{
+                  fontSize: "13px",
+                  color: "#171717",
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  ml: 2,
+                  flexShrink: 0,
+                  textDecoration: "underline",
+                }}
+              >
+                Dismiss
+              </Typography>
+            )}
           </Box>
         )}
 
@@ -374,7 +498,72 @@ export default function LenderPaymentsPage() {
                       ? () => handleWithdraw(position)
                       : undefined
                   }
-                  onClaim={() => claimPayment()}
+                />
+              );
+            })
+          )}
+        </Box>
+
+        {/* Factored Invoices Section */}
+        <Typography
+          sx={{
+            fontSize: "16px",
+            fontWeight: 600,
+            color: "#333333",
+            fontFamily: "inherit",
+            mt: 4,
+          }}
+        >
+          Factored Invoices to Claim
+        </Typography>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {factoredInvoices.length === 0 ? (
+            <Typography
+              sx={{ fontSize: "14px", color: "#999999", fontFamily: "inherit" }}
+            >
+              No factored invoices to claim yet.
+            </Typography>
+          ) : (
+            factoredInvoices.map((factoredInvoice) => {
+              const payment = factoredInvoice.payment;
+              const isCompleted = payment.status === "completed";
+              const isClaiming =
+                claimState !== "idle" &&
+                claimState !== "done" &&
+                claimState !== "error";
+
+              const remaining = (
+                (parseFloat(payment.total_amount) *
+                  payment.remaining_percentage) /
+                100
+              ).toFixed(2);
+
+              return (
+                <PaymentCard
+                  key={factoredInvoice.id}
+                  paymentId={payment.id}
+                  variant="seller"
+                  company={`Seller: ${payment.seller_address}`}
+                  terms={`${factoredInvoice.discount_rate}% discount rate • Invoice factored for ${remaining} USDC`}
+                  amount={`$${parseFloat(remaining).toLocaleString()} USDC`}
+                  badges={
+                    isCompleted
+                      ? ["Completed"]
+                      : ["Ready to Claim", `${factoredInvoice.status}`]
+                  }
+                  remaining={
+                    isCompleted
+                      ? undefined
+                      : `Factored amount: $${parseFloat(
+                          factoredInvoice.factored_amount
+                        ).toLocaleString()}`
+                  }
+                  onClaim={
+                    isCompleted || isClaiming
+                      ? undefined
+                      : () => claimPayment(payment)
+                  }
                 />
               );
             })

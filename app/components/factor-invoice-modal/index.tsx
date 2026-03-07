@@ -48,14 +48,12 @@ export default function FactorInvoiceModal({
         body: JSON.stringify({
           payment_id: payment.id,
           seller_address: payment.seller_address,
-          lender_offer_id: "0", // Will be matched later
           invoice_id: invoiceId,
           total_invoice_amount: totalAmount.toString(),
           upfront_paid: upfrontPaid.toString(),
           factored_amount: remainingAmount.toString(),
           payout_to_seller: payoutAmount.toString(),
           discount_rate: selectedRate,
-          status: "pending",
         }),
       });
 

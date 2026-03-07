@@ -22,12 +22,31 @@ export default function SellerPaymentsPage() {
 
   const fetchPayments = useCallback(async () => {
     if (!sellerAddress) return;
+
+    // Fetch all payments
     const res = await fetch("/api/payments");
     const json = await res.json();
+
     if (json.success) {
+      // Fetch factored invoices for this seller
+      const factoredRes = await fetch(
+        `/api/factored-invoices?seller_address=${sellerAddress}`
+      );
+      const factoredJson = await factoredRes.json();
+
+      // Get payment IDs that have been factored
+      const factoredPaymentIds = new Set(
+        factoredJson.success
+          ? factoredJson.data.map((fi: any) => fi.payment_id)
+          : []
+      );
+
+      // Filter out factored invoices and only show seller's payments
       setPayments(
         (json.data as Payment[]).filter(
-          (p) => p.seller_address.toLowerCase() === sellerAddress.toLowerCase()
+          (p) =>
+            p.seller_address.toLowerCase() === sellerAddress.toLowerCase() &&
+            !factoredPaymentIds.has(p.id)
         )
       );
     }
