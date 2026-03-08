@@ -1,213 +1,55 @@
-# zkTLS Package Tracking Verification
+# Jarvis
+Jarvis automates stablecoin-based trade finance contracts via ZkTLS and offers sellers instant liquidity through a permissionless invoice factoring marketplace.
 
-Proof-of-concept script that uses Reclaim Protocol's zkFetch to cryptographically prove Amazon package delivery status and generate blockchain-compatible proofs.
+# Problem We're Solving
+Interacting with trade finance is slow, costly, and riddled with trust problems. Internationally and domestically, businesses rely on third-party banks to post Letters of Credit (LC)—a process that delays payments by 7 to 21 days and adds unnecessary overhead. Jarvis replaces this with smart contract-powered escrow, using Zero-Knowledge TLS (ZkTLS) to privately and verifiably confirm FedEx package delivery and conditionally release stablecoins based on custom payment terms.
 
-## Overview
+For sellers who can't wait for delivery, Jarvis offers a permissionless invoice factoring marketplace where lenders provide instant liquidity at a discount rate, earning yield when the invoice settles on delivery.
 
-This script demonstrates how zkTLS (zero-knowledge Transport Layer Security) can be used to verify package delivery without requiring API access or exposing sensitive session data. It generates cryptographic proofs that can be verified on-chain.
+# How's it work?
+1. **Create a Payment**: Buyer sets terms (upfront %, remaining %, seller address), locks USDC in escrow, and the upfront amount is immediately released to the seller.
+2. **Verify Delivery with ZkTLS**: Seller scans a QR code that triggers Reclaim Protocol's ZkTLS flow on mobile—generating a zero-knowledge proof of FedEx delivery status without exposing sensitive tracking data.
+3. **Release Remaining Funds**: The ZK proof is submitted on-chain to the FedExEscrow contract, which verifies it and releases the remaining escrowed amount to the seller.
+4. **Optional — Factor the Invoice**: If the seller wants liquidity before delivery, they factor the invoice at a discount (5% or 10%), get paid immediately, and redirect the escrow payout to the lender on settlement.
+5. **Lenders Earn Yield**: Lenders deposit funds at a chosen discount rate. When invoices they've funded are settled, they receive the full amount and pocket the spread.
 
-## Use Case
+# System Architecture
 
-When an importer receives goods, they need to trigger stablecoin payment to the exporter. This script proves that a package was delivered by:
+## Key Components:
+- **FedExEscrow.sol** (Arbitrum Sepolia): Escrow contract that holds USDC, releases upfront immediately, and conditionally releases the remainder on ZK-verified delivery
+- **InvoiceFactoring.sol** (Robinhood Testnet): Permissionless 1-to-1 lending marketplace for invoice factoring with tranche-based discount rates
+- **ZkTLS via Reclaim Protocol**: Privately verifies FedEx package delivery on-chain without exposing raw tracking data
+- **Supabase**: Off-chain state management for payments, lender positions, and factored invoices, with proof data stored alongside records
+- **Privy**: Embedded wallet and user authentication for seamless onboarding
+- **Next.js Frontend**: Three-role dashboard (Buyer / Seller / Lender) built with Next.js 16, React 19, and MUI
 
-1. Fetching Amazon tracking data via zkFetch
-2. Generating a cryptographic proof of the response
-3. Verifying the proof off-chain
-4. Transforming the proof for on-chain verification
-5. Outputting the proof for smart contract integration
+# Invoice Factoring Model
 
-## Prerequisites
+The factoring marketplace supports two discount tiers:
 
-- Node.js 18+
-- npm or yarn
-- Reclaim Protocol credentials (APP_ID and APP_SECRET)
-- Amazon tracking number
+- **5% Discount (Low Risk)**: Seller receives 95% of invoice value immediately; lender earns 5% on settlement
+- **10% Discount (High Risk)**: Seller receives 90% of invoice value immediately; lender earns 10% on settlement
 
-## Setup
+Sellers choose their discount rate based on urgency and cost tolerance. Lenders set their discount rate when creating an offer and are matched automatically with factoring requests. Lender funds remain withdrawable until deployed into a factored invoice.
 
-1. **Clone the repository**
+# Payment Lifecycle
 
-```bash
-git clone <repo-url>
-cd jarvis-smb-arbitrum
-```
+1. **Escrow Created** — Buyer locks USDC; upfront amount released immediately to seller
+2. **Pending Delivery** — Remaining funds held in escrow; seller awaits delivery
+3. **ZK Proof Submitted** — Seller generates Reclaim ZkTLS proof of FedEx delivery on mobile
+4. **Funds Released** — Smart contract verifies proof on-chain and releases remaining amount
+5. **(Optional) Factored** — Seller factors invoice pre-delivery; lender advances discounted payout and is set as escrow beneficiary for settlement
 
-2. **Install dependencies**
+# Future Improvements
+- Expand ZkTLS integrations beyond FedEx to UPS, DHL, and other major carriers
+- Add support for partial delivery verification (multi-shipment contracts)
+- Plug into legacy trade finance platforms (e.g. TradeWindow, Bolero) as a verifiable data layer
+- Introduce multi-lender tranche pools for larger invoice factoring needs
+- Integrate additional stablecoins (USDT, DAI) and expand to mainnet deployments
 
-```bash
-npm install
-```
-
-3. **Configure environment variables**
-
-Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and add your credentials:
-
-```
-RECLAIM_APP_ID=your_app_id_here
-RECLAIM_APP_SECRET=your_app_secret_here
-TRACKING_NUMBER=TBA326330626265
-```
-
-**Getting Reclaim credentials:**
-- Visit [Reclaim Protocol](https://dev.reclaimprotocol.org/)
-- Sign up for a developer account
-- Create a new application
-- Copy your APP_ID and APP_SECRET
-
-4. **Run the script**
-
-```bash
-npm start
-```
-
-## Output
-
-The script will:
-- Display progress in the console
-- Verify the proof signature
-- Save the on-chain proof to `output/proof-output.json`
-
-Example output:
-
-```
-============================================================
-zkTLS Package Tracking Verification
-============================================================
-
-Step 1: Loading configuration...
-✓ Configuration loaded
-
-Step 2: Fetching tracking proof via zkFetch...
-Initializing Reclaim client...
-Fetching tracking data from: https://track.amazon.com/tracking/TBA326330626265
-Executing zkFetch...
-zkFetch completed successfully
-✓ Proof generated
-
-Step 3: Verifying proof...
-Verifying proof signature...
-✓ Proof verification successful
-
-Step 4: Transforming proof for blockchain...
-Transforming proof for on-chain use...
-✓ Proof transformed for blockchain
-
-Step 5: Displaying proof summary...
-[Proof details...]
-
-Step 6: Saving proof to file...
-Saving proof to output/proof-output.json...
-✓ Proof saved successfully
-
-============================================================
-SUCCESS: Proof generation complete!
-============================================================
-
-Next steps:
-1. Check output/proof-output.json for the proof
-2. Share this proof with your smart contract developer
-3. The proof can be verified on-chain using Reclaim Protocol
-```
-
-## Project Structure
-
-```
-jarvis-smb-arbitrum/
-├── src/
-│   ├── index.ts       # Main application entry point
-│   ├── config.ts      # Environment configuration
-│   ├── zkfetch.ts     # zkFetch integration
-│   ├── verify.ts      # Proof verification and transformation
-│   └── output.ts      # File output and display
-├── output/
-│   └── proof-output.json  # Generated proof (gitignored)
-├── docs/
-│   └── plans/         # Design and implementation docs
-├── .env               # Environment variables (gitignored)
-├── .env.example       # Environment template
-├── package.json       # Dependencies
-├── tsconfig.json      # TypeScript configuration
-└── README.md          # This file
-```
-
-## How It Works
-
-### zkFetch
-
-The script uses Reclaim Protocol's zkFetch to:
-- Make a TLS request to Amazon's tracking page
-- Generate a zero-knowledge proof of the response
-- Prove that "Delivered" appears in the response without revealing session data
-
-### Proof Verification
-
-The proof is verified off-chain using `Reclaim.verifySignedProof()` to ensure:
-- The proof signature is valid
-- The data hasn't been tampered with
-- The proof was generated by Reclaim Protocol
-
-### On-Chain Transformation
-
-The proof is transformed into a format suitable for blockchain verification using `Reclaim.transformForOnchain()`. This format can be passed to a smart contract for on-chain verification.
-
-## Next Steps
-
-### Smart Contract Integration
-
-The generated proof in `output/proof-output.json` can be used with a smart contract that:
-
-1. Accepts the proof as input
-2. Verifies the proof on-chain using Reclaim's verifier contract
-3. Triggers payment release if proof is valid
-
-Example smart contract flow (to be implemented):
-
-```solidity
-function releasePaymentOnDelivery(bytes memory proof) public {
-    bool isValid = reclaimVerifier.verify(proof);
-    require(isValid, "Invalid delivery proof");
-
-    // Release stablecoins to exporter
-    stablecoin.transfer(exporter, amount);
-}
-```
-
-### Future Enhancements
-
-- Add support for multiple carriers (UPS, FedEx, DHL)
-- Implement automated checking via GitHub Actions
-- Add frontend UI for manual verification
-- Store tracking numbers in database
-- Integrate directly with smart contract
-- Add comprehensive error handling and retries
-
-## Troubleshooting
-
-**Error: "RECLAIM_APP_ID is required"**
-- Make sure you've created a `.env` file with your credentials
-
-**Error: "zkFetch failed"**
-- Check your internet connection
-- Verify the tracking number is valid
-- Ensure Reclaim Protocol service is available
-
-**Error: "Proof verification failed"**
-- The proof signature is invalid
-- Try generating a new proof
-- Contact Reclaim Protocol support
-
-## Resources
-
-- [Reclaim Protocol Documentation](https://docs.reclaimprotocol.org/)
-- [zkFetch SDK](https://github.com/reclaimprotocol/zk-fetch)
-- [Design Document](./docs/plans/2026-03-03-zktls-tracking-verification-design.md)
-
-## License
-
-MIT
+# References
+- **FedExEscrow Contract** (Arbitrum Sepolia): `0x...`
+- **InvoiceFactoring Contract** (Robinhood Testnet): `0x...`
+- **Reclaim Protocol**: https://reclaimprotocol.org
+- **Arbitrum Sepolia Chain ID**: 421614
+- **Robinhood Testnet Chain ID**: 46630
