@@ -7,7 +7,7 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Jarvis SMB Arbitrum",
+  title: "Jarvis",
   description: "SMB Stablecoin Payment MVP with Reclaim Protocol",
 };
 
