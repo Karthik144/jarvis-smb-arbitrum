@@ -48,8 +48,9 @@ Sellers choose their discount rate based on urgency and cost tolerance. Lenders 
 - Integrate additional stablecoins (USDT, DAI) and expand to mainnet deployments
 
 # References
-- **FedExEscrow Contract** (Arbitrum Sepolia): `0x...`
-- **InvoiceFactoring Contract** (Robinhood Testnet): `0x...`
+- **FedExEscrow Contract** (Arbitrum Sepolia): `0x04eA3BeCb7cb5895d3916900d931CaF1BcA02914`
+- **InvoiceFactoring Contract** (Robinhood Testnet): `0x207CaC4B8B14Ef28a962B419959AA23fF94c2191`
+- **USAT Contract** (Robinhood Testnet): `0x026671bE3F475c9003fc0eBc3d77e9FA44dA5f55`
 - **Reclaim Protocol**: https://reclaimprotocol.org
 - **Arbitrum Sepolia Chain ID**: 421614
 - **Robinhood Testnet Chain ID**: 46630
